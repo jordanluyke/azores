@@ -1,7 +1,7 @@
 Azores
 ======
 
-Starts a 3 Hz tone, designed to be used on small devices such as [Raspberry Pi](https://www.raspberrypi.org/) hooked up to an amp and [vortex coil](https://1stopenergies.com/products/poe-vortex-coil-mini).
+Starts a 3 Hz tone, designed to be used on small devices such as [Raspberry Pi](https://www.raspberrypi.org/) hooked up to an amp and [vortex coil](https://1stopenergies.com/t/vortex-coils).
 
 The Azores Pyramid was the pyramid of Atlantis which was "built for biorhythmic synchronization at precisely calibrated wavelengths that correspond to harmonics of planetary infrasound resonance."[1]
 
