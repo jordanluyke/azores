@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+if [ -z "`which mvn`" ]; then
+    echo "'mvn' could not be found, please ensure it's on your PATH first. :("
+    exit 1
+fi
+
+mvn clean compile assembly:single
+
+java -jar target/azores-1.0-SNAPSHOT-jar-with-dependencies.jar
