@@ -32,7 +32,7 @@ public class VolumeOscillatorContext extends BaseContext implements AudioContext
         toneOscillator.frequency.set(toneFrequency);
         toneOscillator.amplitude.set(1);
 
-        volumeOscillator.frequency.set(volumeFrequency);
+        volumeOscillator.frequency.set(volumeFrequency / 2);
         volumeOscillator.amplitude.set(1);
 
         volumeOscillator.output.connect(toneOscillator.amplitude);
