@@ -41,7 +41,6 @@ public class SweeperContext extends BaseContext implements AudioContext {
 
         carrier.output.connect(0, lineOut.input, 0);
         carrier.output.connect(0, lineOut.input, 1);
-        carrier.amplitude.set(1);
     }
 
     @Override

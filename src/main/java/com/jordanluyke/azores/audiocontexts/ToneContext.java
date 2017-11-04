@@ -11,8 +11,8 @@ import com.jsyn.unitgen.UnitOscillator;
  */
 public class ToneContext extends BaseContext implements AudioContext {
 
-    private UnitOscillator oscillator;
     private double frequency;
+    private UnitOscillator oscillator;
 
     public ToneContext(double frequency, WaveType waveType) {
         this.frequency = frequency;
@@ -25,22 +25,20 @@ public class ToneContext extends BaseContext implements AudioContext {
         synthesizer.add(lineOut);
 
         oscillator.frequency.set(frequency);
+        oscillator.amplitude.set(1);
 
         oscillator.output.connect(0, lineOut.input, 0);
         oscillator.output.connect(0, lineOut.input, 1);
-        oscillator.amplitude.set(1);
     }
 
     @Override
     public void start() {
         synthesizer.start();
-        oscillator.start();
         lineOut.start();
     }
 
     @Override
     public void stop() {
-        oscillator.stop();
         lineOut.stop();
         synthesizer.stop();
     }
