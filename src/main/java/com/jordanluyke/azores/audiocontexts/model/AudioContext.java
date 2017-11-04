@@ -6,8 +6,4 @@ package com.jordanluyke.azores.audiocontexts.model;
 public interface AudioContext {
 
     void configure();
-
-    void start();
-
-    void stop();
 }

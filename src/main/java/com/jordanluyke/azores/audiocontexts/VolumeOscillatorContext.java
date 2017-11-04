@@ -40,16 +40,4 @@ public class VolumeOscillatorContext extends BaseContext implements AudioContext
         toneOscillator.output.connect(0, lineOut.input, 0);
         toneOscillator.output.connect(0, lineOut.input, 1);
     }
-
-    @Override
-    public void start() {
-        synthesizer.start();
-        lineOut.start();
-    }
-
-    @Override
-    public void stop() {
-        lineOut.stop();
-        synthesizer.stop();
-    }
 }

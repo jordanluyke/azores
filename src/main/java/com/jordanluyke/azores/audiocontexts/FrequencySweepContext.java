@@ -32,26 +32,14 @@ public class FrequencySweepContext extends BaseContext implements AudioContext {
         synthesizer.add(lineOut);
 
         carrier.frequency.set(carrierFrequency);
-        modulator.frequency.set(modulatorFrequency);
-
         carrier.amplitude.set(1);
+
+        modulator.frequency.set(modulatorFrequency);
         modulator.amplitude.set(amplitude);
 
         modulator.output.connect(carrier.modulation);
 
         carrier.output.connect(0, lineOut.input, 0);
         carrier.output.connect(0, lineOut.input, 1);
-    }
-
-    @Override
-    public void start() {
-        synthesizer.start();
-        lineOut.start();
-    }
-
-    @Override
-    public void stop() {
-        lineOut.stop();
-        synthesizer.stop();
     }
 }

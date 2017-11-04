@@ -30,16 +30,4 @@ public class ToneContext extends BaseContext implements AudioContext {
         oscillator.output.connect(0, lineOut.input, 0);
         oscillator.output.connect(0, lineOut.input, 1);
     }
-
-    @Override
-    public void start() {
-        synthesizer.start();
-        lineOut.start();
-    }
-
-    @Override
-    public void stop() {
-        lineOut.stop();
-        synthesizer.stop();
-    }
 }

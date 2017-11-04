@@ -12,4 +12,14 @@ import com.jsyn.unitgen.UnitOscillator;
 public abstract class BaseContext {
     protected Synthesizer synthesizer = JSyn.createSynthesizer();
     protected LineOut lineOut = new LineOut();
+
+    public void start() {
+        synthesizer.start();
+        lineOut.start();
+    }
+
+    public void stop() {
+        lineOut.stop();
+        synthesizer.stop();
+    }
 }
