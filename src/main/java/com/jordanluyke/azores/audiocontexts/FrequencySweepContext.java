@@ -10,17 +10,17 @@ import com.jsyn.unitgen.UnitOscillator;
 /**
  * @author Jordan Luyke <jordanluyke@gmail.com>
  */
-public class SweeperContext extends BaseContext implements AudioContext {
+public class FrequencySweepContext extends BaseContext implements AudioContext {
 
     private double carrierFrequency;
-    private double range;
+    private double amplitude;
     private UnitOscillator modulator;
     private double modulatorFrequency;
     private SineOscillatorPhaseModulated carrier = new SineOscillatorPhaseModulated();
 
-    public SweeperContext(double carrierFrequency, double range, WaveType waveType, double modulatorFrequency) {
+    public FrequencySweepContext(double carrierFrequency, double amplitude, WaveType waveType, double modulatorFrequency) {
         this.carrierFrequency = carrierFrequency;
-        this.range = range;
+        this.amplitude = amplitude;
         this.modulator = SynthUtil.createOscillator(waveType);
         this.modulatorFrequency = modulatorFrequency;
     }
@@ -35,7 +35,7 @@ public class SweeperContext extends BaseContext implements AudioContext {
         modulator.frequency.set(modulatorFrequency);
 
         carrier.amplitude.set(1);
-        modulator.amplitude.set(range);
+        modulator.amplitude.set(amplitude);
 
         modulator.output.connect(carrier.modulation);
 
