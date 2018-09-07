@@ -16,29 +16,29 @@ import lombok.*;
 @Builder
 public class AmplitudeModulationContext extends BaseContext {
 
-    private double toneFrequency;
-    private double amplitudeFrequency;
+    private double carrierFrequency;
+    private double modulatorFrequency;
     @Builder.Default private WaveType waveType = WaveType.SINE;
     @Builder.Default private double amplitude = 1;
 
     public AmplitudeModulationContext configure() {
-        UnitOscillator toneOscillator = SynthUtil.createOscillator(waveType);
-        UnitOscillator amplitudeOscillator = SynthUtil.createOscillator(waveType);
+        UnitOscillator carrierOscillator = SynthUtil.createOscillator(waveType);
+        UnitOscillator modulatorOscillator = SynthUtil.createOscillator(waveType);
 
-        synthesizer.add(toneOscillator);
-        synthesizer.add(amplitudeOscillator);
+        synthesizer.add(carrierOscillator);
+        synthesizer.add(modulatorOscillator);
         synthesizer.add(lineOut);
 
-        toneOscillator.frequency.set(toneFrequency);
-        toneOscillator.amplitude.set(amplitude);
+        carrierOscillator.frequency.set(carrierFrequency);
+        carrierOscillator.amplitude.set(amplitude);
 
-        amplitudeOscillator.frequency.set(amplitudeFrequency / 2);
-        amplitudeOscillator.amplitude.set(amplitude);
+        modulatorOscillator.frequency.set(modulatorFrequency / 2);
+        modulatorOscillator.amplitude.set(amplitude);
 
-        toneOscillator.output.connect(amplitudeOscillator.amplitude);
+        carrierOscillator.output.connect(modulatorOscillator.amplitude);
 
-        amplitudeOscillator.output.connect(0, lineOut.input, 0);
-        amplitudeOscillator.output.connect(0, lineOut.input, 1);
+        modulatorOscillator.output.connect(0, lineOut.input, 0);
+        modulatorOscillator.output.connect(0, lineOut.input, 1);
 
         return this;
     }

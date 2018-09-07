@@ -14,8 +14,8 @@ public class Main {
                 .start();
 
 //        AmplitudeModulationContext.builder()
-//                .toneFrequency(528)
-//                .amplitudeFrequency(3)
+//                .carrierFrequency(528)
+//                .modulatorFrequency(3)
 //                .build()
 //                .configure()
 //                .start();

@@ -23,23 +23,23 @@ public class FrequencyModulationContext extends BaseContext {
     @Builder.Default private double amplitude = 1;
 
     public FrequencyModulationContext configure() {
-        UnitOscillator modulator = SynthUtil.createOscillator(waveType);
-        SineOscillatorPhaseModulated carrier = new SineOscillatorPhaseModulated();
+        SineOscillatorPhaseModulated carrierOscillator = new SineOscillatorPhaseModulated();
+        UnitOscillator modulatorOscillator = SynthUtil.createOscillator(waveType);
 
-        synthesizer.add(carrier);
-        synthesizer.add(modulator);
+        synthesizer.add(carrierOscillator);
+        synthesizer.add(modulatorOscillator);
         synthesizer.add(lineOut);
 
-        carrier.frequency.set(carrierFrequency);
-        carrier.amplitude.set(amplitude);
+        carrierOscillator.frequency.set(carrierFrequency);
+        carrierOscillator.amplitude.set(amplitude);
 
-        modulator.frequency.set(modulatorFrequency);
-        modulator.amplitude.set(amplitude);
+        modulatorOscillator.frequency.set(modulatorFrequency);
+        modulatorOscillator.amplitude.set(amplitude);
 
-        modulator.output.connect(carrier.modulation);
+        modulatorOscillator.output.connect(carrierOscillator.modulation);
 
-        carrier.output.connect(0, lineOut.input, 0);
-        carrier.output.connect(0, lineOut.input, 1);
+        carrierOscillator.output.connect(0, lineOut.input, 0);
+        carrierOscillator.output.connect(0, lineOut.input, 1);
 
         return this;
     }
