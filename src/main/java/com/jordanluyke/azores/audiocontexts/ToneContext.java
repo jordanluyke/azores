@@ -1,32 +1,28 @@
 package com.jordanluyke.azores.audiocontexts;
 
-import com.jordanluyke.azores.audiocontexts.model.AudioContext;
 import com.jordanluyke.azores.audiocontexts.model.BaseContext;
 import com.jordanluyke.azores.audiocontexts.model.WaveType;
 import com.jordanluyke.azores.util.SynthUtil;
 import com.jsyn.unitgen.UnitOscillator;
+import lombok.*;
 
 /**
  * @author Jordan Luyke <jordanluyke@gmail.com>
  */
-public class ToneContext extends BaseContext implements AudioContext {
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class ToneContext extends BaseContext {
 
     private double frequency;
-    private UnitOscillator oscillator;
-    private double amplitude;
+    @Builder.Default private WaveType waveType = WaveType.SINE;
+    @Builder.Default private double amplitude = 1;
 
-    public ToneContext(double frequency, WaveType waveType) {
-        this(frequency, waveType, 1);
-    }
+    public BaseContext configure() {
+        UnitOscillator oscillator = SynthUtil.createOscillator(waveType);
 
-    public ToneContext(double frequency, WaveType waveType, double amplitude) {
-        this.frequency = frequency;
-        this.oscillator = SynthUtil.createOscillator(waveType);
-        this.amplitude = amplitude;
-    }
-
-    @Override
-    public void configure() {
         synthesizer.add(oscillator);
         synthesizer.add(lineOut);
 
@@ -35,5 +31,7 @@ public class ToneContext extends BaseContext implements AudioContext {
 
         oscillator.output.connect(0, lineOut.input, 0);
         oscillator.output.connect(0, lineOut.input, 1);
+
+        return this;
     }
 }

@@ -1,13 +1,30 @@
 package com.jordanluyke.azores;
 
 import com.jordanluyke.azores.audiocontexts.ToneContext;
-import com.jordanluyke.azores.audiocontexts.model.WaveType;
+import com.jordanluyke.azores.audiocontexts.AmplitudeModulationContext;
+import com.jordanluyke.azores.audiocontexts.FrequencyModulationContext;
 
 public class Main {
 
     public static void main(String[] args) {
-        ToneContext tone = new ToneContext(3, WaveType.SINE);
-        tone.configure();
-        tone.start();
+        ToneContext.builder()
+                .frequency(528)
+                .build()
+                .configure()
+                .start();
+
+//        AmplitudeModulationContext.builder()
+//                .toneFrequency(528)
+//                .amplitudeFrequency(3)
+//                .build()
+//                .configure()
+//                .start();
+
+//        FrequencyModulationContext.builder()
+//                .carrierFrequency(528)
+//                .modulatorFrequency(3)
+//                .build()
+//                .configure()
+//                .start();
     }
 }

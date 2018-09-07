@@ -1,38 +1,37 @@
 package com.jordanluyke.azores.audiocontexts;
 
-import com.jordanluyke.azores.audiocontexts.model.AudioContext;
 import com.jordanluyke.azores.audiocontexts.model.BaseContext;
 import com.jordanluyke.azores.audiocontexts.model.WaveType;
 import com.jordanluyke.azores.util.SynthUtil;
 import com.jsyn.unitgen.SineOscillatorPhaseModulated;
 import com.jsyn.unitgen.UnitOscillator;
+import lombok.*;
 
 /**
  * @author Jordan Luyke <jordanluyke@gmail.com>
  */
-public class FrequencySweepContext extends BaseContext implements AudioContext {
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class FrequencyModulationContext extends BaseContext {
 
     private double carrierFrequency;
-    private double amplitude;
-    private UnitOscillator modulator;
     private double modulatorFrequency;
-    private SineOscillatorPhaseModulated carrier = new SineOscillatorPhaseModulated();
+    @Builder.Default private WaveType waveType = WaveType.SINE;
+    @Builder.Default private double amplitude = 1;
 
-    public FrequencySweepContext(double carrierFrequency, double amplitude, WaveType waveType, double modulatorFrequency) {
-        this.carrierFrequency = carrierFrequency;
-        this.amplitude = amplitude;
-        this.modulator = SynthUtil.createOscillator(waveType);
-        this.modulatorFrequency = modulatorFrequency;
-    }
+    public FrequencyModulationContext configure() {
+        UnitOscillator modulator = SynthUtil.createOscillator(waveType);
+        SineOscillatorPhaseModulated carrier = new SineOscillatorPhaseModulated();
 
-    @Override
-    public void configure() {
         synthesizer.add(carrier);
         synthesizer.add(modulator);
         synthesizer.add(lineOut);
 
         carrier.frequency.set(carrierFrequency);
-        carrier.amplitude.set(1);
+        carrier.amplitude.set(amplitude);
 
         modulator.frequency.set(modulatorFrequency);
         modulator.amplitude.set(amplitude);
@@ -41,5 +40,7 @@ public class FrequencySweepContext extends BaseContext implements AudioContext {
 
         carrier.output.connect(0, lineOut.input, 0);
         carrier.output.connect(0, lineOut.input, 1);
+
+        return this;
     }
 }
