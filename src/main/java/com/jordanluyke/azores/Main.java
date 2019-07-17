@@ -1,30 +1,21 @@
 package com.jordanluyke.azores;
 
-import com.jordanluyke.azores.audiocontexts.ToneContext;
-import com.jordanluyke.azores.audiocontexts.AmplitudeModulationContext;
-import com.jordanluyke.azores.audiocontexts.FrequencyModulationContext;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.jordanluyke.azores.util.ErrorHandlingSubscriber;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Main {
+    private static final Logger logger = LogManager.getLogger(Main.class);
 
     public static void main(String[] args) {
-        ToneContext.builder()
-                .frequency(528)
-                .build()
-                .configure()
-                .start();
-
-//        AmplitudeModulationContext.builder()
-//                .carrierFrequency(528)
-//                .modulatorFrequency(3)
-//                .build()
-//                .configure()
-//                .start();
-
-//        FrequencyModulationContext.builder()
-//                .carrierFrequency(528)
-//                .modulatorFrequency(3)
-//                .build()
-//                .configure()
-//                .start();
+        logger.info("Initializing");
+        Injector injector = Guice.createInjector(new MainModule());
+        injector.getInstance(Config.class)
+                .setInjector(injector);
+        injector.getInstance(MainManager.class)
+                .start()
+                .subscribe(new ErrorHandlingSubscriber<>());
     }
 }

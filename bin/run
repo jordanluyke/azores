@@ -2,8 +2,6 @@
 
 set -e
 
-mvn clean compile assembly:single
-
 JAR=target/azores-1.0-SNAPSHOT-jar-with-dependencies.jar
 
 java -jar ${JAR}

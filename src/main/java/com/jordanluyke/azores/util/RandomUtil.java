@@ -1,0 +1,23 @@
+package com.jordanluyke.azores.util;
+
+import java.util.Random;
+
+/**
+ * @author Jordan Luyke <jordanluyke@gmail.com>
+ */
+public class RandomUtil {
+
+    private static String eligibleCharacters = "123456789ABCDEFGHJLMNPQRTUVWXYZ";
+    private static final Random random = new Random();
+
+    public static String generateId() {
+        return generateRandom(16);
+    }
+
+    public static String generateRandom(int characters) {
+        StringBuilder r = new StringBuilder();
+        for(int i=0; i<characters; i++)
+            r.append(eligibleCharacters.charAt(((int) (random.nextDouble() * eligibleCharacters.length()))));
+        return r.toString();
+    }
+}
