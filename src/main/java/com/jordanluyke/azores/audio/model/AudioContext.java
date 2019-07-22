@@ -1,12 +1,14 @@
 package com.jordanluyke.azores.audio.model;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 /**
  * @author Jordan Luyke <jordanluyke@gmail.com>
  */
 public abstract class AudioContext {
 
-    public abstract void set(double frequency);
     public abstract AudioType getAudioType();
-    protected abstract void start(double frequency);
+    public abstract void start();
     public abstract void stop();
+    public abstract ObjectNode getJsonInfo();
 }
