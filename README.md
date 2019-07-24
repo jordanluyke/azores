@@ -5,10 +5,11 @@
 
 - GET /frequency
 - POST /frequency
+
     ```
     {
         type: "TONE",
-        frequency: "111"
+        frequency: 111
     }
 
     {
