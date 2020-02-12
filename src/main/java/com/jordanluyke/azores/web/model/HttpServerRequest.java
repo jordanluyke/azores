@@ -1,6 +1,8 @@
 package com.jordanluyke.azores.web.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpMethod;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,4 +23,5 @@ public class HttpServerRequest {
     private Optional<JsonNode> body = Optional.empty();
     private String path;
     private HttpMethod method;
+    private ChannelHandlerContext ctx;
 }

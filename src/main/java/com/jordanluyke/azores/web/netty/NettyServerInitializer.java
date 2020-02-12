@@ -8,27 +8,25 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
+import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import rx.Emitter;
-import rx.Observable;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Jordan Luyke <jordanluyke@gmail.com>
  */
+@AllArgsConstructor(onConstructor = @__(@Inject))
 public class NettyServerInitializer {
     private static final Logger logger = LogManager.getLogger(NettyServerInitializer.class);
 
     private Config config;
     private NettyHttpChannelInitializer nettyHttpChannelInitializer;
 
-    @Inject
-    public NettyServerInitializer(Config config, NettyHttpChannelInitializer nettyHttpChannelInitializer) {
-        this.config = config;
-        this.nettyHttpChannelInitializer = nettyHttpChannelInitializer;
-    }
-
-    public Observable<Void> initialize() {
+    public Completable init() {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         ServerBootstrap bootstrap = new ServerBootstrap()
@@ -36,21 +34,20 @@ public class NettyServerInitializer {
                 .channel(NioServerSocketChannel.class)
                 .childHandler(nettyHttpChannelInitializer);
 
-        return channelFutureToObservable(bootstrap.bind(config.getPort()))
-                .doOnNext(Void -> logger.info("Listening on port {}", config.getPort()))
-                .flatMap(channel -> channelFutureToObservable(channel.closeFuture()))
-                .ignoreElements()
-                .cast(Void.class);
+        return getChannel(bootstrap.bind(config.getPort()))
+                .doOnSuccess(Void -> logger.info("Listening on port {}", config.getPort()))
+                .flatMap(channel -> getChannel(channel.closeFuture()))
+                .flatMapCompletable(Void -> Completable.complete());
     }
 
-    private Observable<Channel> channelFutureToObservable(ChannelFuture channelFuture) {
-        return Observable.create(observer -> channelFuture
-                .addListener(future -> {
-                    if(future.isSuccess()) {
-                        observer.onNext(channelFuture.channel());
-                        observer.onCompleted();
-                    } else
-                        observer.onError(future.cause());
-                }), Emitter.BackpressureMode.BUFFER);
+    private static Single<Channel> getChannel(ChannelFuture channelFuture) {
+        CompletableFuture<Channel> completableFuture = new CompletableFuture<>();
+        channelFuture.addListener((ChannelFuture future) -> {
+            if(future.isSuccess())
+                completableFuture.complete(future.channel());
+            else
+                completableFuture.completeExceptionally(future.cause());
+        });
+        return Single.fromFuture(completableFuture);
     }
 }

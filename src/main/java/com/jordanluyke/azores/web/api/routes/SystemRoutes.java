@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jordanluyke.azores.web.api.model.HttpRouteHandler;
 import com.jordanluyke.azores.web.model.HttpServerRequest;
+import io.reactivex.rxjava3.core.Single;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import rx.Observable;
 
 /**
  * @author Jordan Luyke <jordanluyke@gmail.com>
@@ -16,7 +16,7 @@ public class SystemRoutes {
 
     public static class GetStatus implements HttpRouteHandler {
         @Override
-        public Observable<ObjectNode> handle(Observable<HttpServerRequest> o) {
+        public Single<ObjectNode> handle(Single<HttpServerRequest> o) {
             return o.map(req -> {
                 ObjectNode body = new ObjectMapper().createObjectNode();
                 body.put("time", System.currentTimeMillis());

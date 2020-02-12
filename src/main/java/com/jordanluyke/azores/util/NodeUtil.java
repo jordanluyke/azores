@@ -1,6 +1,7 @@
 package com.jordanluyke.azores.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -9,9 +10,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jordanluyke.azores.web.model.FieldRequiredException;
 import com.jordanluyke.azores.web.model.WebException;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.reactivex.rxjava3.core.Single;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import rx.Observable;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -26,17 +27,14 @@ public class NodeUtil {
     public static ObjectMapper mapper = new ObjectMapper()
             .registerModule(new Jdk8Module())
             .registerModule(new JavaTimeModule())
-            .configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
-//            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-//            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-//            .configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false)
-//            .setSerializationInclusion(Include.NON_NULL);
+            .configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public static boolean isValidJSON(byte[] json) {
         try {
             return !mapper.readTree(json).isNull();
         } catch(IOException e) {
-            throw new RuntimeException(e.getMessage());
+            return false;
         }
     }
 
@@ -56,38 +54,47 @@ public class NodeUtil {
         }
     }
 
-    public static <T> Observable<T> parseObjectNodeInto(JsonNode body, Class<T> clazz) {
+    public static <T> Single<T> parseNodeInto(Class<T> clazz, JsonNode body) {
         try {
-            return Observable.just(mapper.treeToValue(body, clazz));
-        } catch (Exception e) {
-            logger.error("Json serialize fail: {}", e.getMessage());
-            e.printStackTrace();
+            return Single.just(mapper.treeToValue(body, clazz));
+        } catch(Exception e) {
+            logger.error("Json serialize fail: {} {}", clazz, body);
             for(Field field : clazz.getFields()) {
                 field.setAccessible(true);
                 String name = field.getName();
                 if(body.get(name) == null)
-                    return Observable.error(new FieldRequiredException(name));
+                    return Single.error(new FieldRequiredException(name));
             }
-            return Observable.error(new WebException(HttpResponseStatus.INTERNAL_SERVER_ERROR));
+            return Single.error(new WebException(HttpResponseStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
-    public static <T> Observable<T> parseObjectNodeInto(Optional<JsonNode> body, Class<T> clazz) {
-        return body.map(jsonNode -> parseObjectNodeInto(jsonNode, clazz)).orElseGet(() -> Observable.error(new WebException("Empty body", HttpResponseStatus.BAD_REQUEST)));
+    public static <T> Single<T> parseNodeInto(Class<T> clazz, Optional<JsonNode> body) {
+        return body.map(jsonNode -> parseNodeInto(clazz, jsonNode)).orElseGet(() -> Single.error(new WebException(HttpResponseStatus.BAD_REQUEST, "Empty body")));
     }
 
-    public static Optional<String> get(JsonNode node, String field) {
+    public static Single<JsonNode> parseObjectIntoNode(Object object) {
+        try {
+            return Single.just(mapper.valueToTree(object));
+        } catch(IllegalArgumentException e) {
+            e.printStackTrace();
+            logger.error("Object parse failed");
+            return Single.error(new WebException(HttpResponseStatus.INTERNAL_SERVER_ERROR));
+        }
+    }
+
+    public static Optional<String> get(String field, JsonNode node) {
         JsonNode fieldNode = node.get(field);
         if(fieldNode == null || fieldNode.isNull())
             return Optional.empty();
         return Optional.of(fieldNode.asText());
     }
 
-    public static Optional<Boolean> getBoolean(JsonNode node, String field) {
-        return get(node, field).map(Boolean::valueOf);
+    public static Optional<Boolean> getBoolean(String field, JsonNode node) {
+        return get(field, node).map(Boolean::valueOf);
     }
 
-    public static Optional<Integer> getInteger(JsonNode node, String field) {
-        return get(node, field).map(Integer::parseInt);
+    public static Optional<Integer> getInteger(String field, JsonNode node) {
+        return get(field, node).map(Integer::parseInt);
     }
 }

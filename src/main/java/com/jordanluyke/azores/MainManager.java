@@ -1,11 +1,11 @@
 package com.jordanluyke.azores;
 
-import rx.Observable;
+import io.reactivex.rxjava3.core.Completable;
 
 /**
  * @author Jordan Luyke <jordanluyke@gmail.com>
  */
 public interface MainManager {
 
-    Observable<Void> start();
+    Completable start();
 }

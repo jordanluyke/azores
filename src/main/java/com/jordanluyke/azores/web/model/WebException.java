@@ -11,19 +11,20 @@ import lombok.Getter;
  */
 @Getter
 public class WebException extends Exception {
+    public static final long serialVersionUID = 100L;
 
     private HttpResponseStatus status;
     private String exceptionType;
 
     public WebException(HttpResponseStatus status) {
-        this(status.reasonPhrase(), status);
+        this(status, status.reasonPhrase());
     }
 
-    public WebException(String message, HttpResponseStatus status) {
-        this(message, status, status.reasonPhrase().replace(" ", "") + "Exception");
+    public WebException(HttpResponseStatus status, String message) {
+        this(status, message, status.reasonPhrase().replace(" ", "") + "Exception");
     }
 
-    public WebException(String message, HttpResponseStatus status, String exceptionType) {
+    public WebException(HttpResponseStatus status, String message, String exceptionType) {
         super(message);
         this.status = status;
         this.exceptionType = exceptionType;

@@ -12,9 +12,9 @@ import com.jordanluyke.azores.web.model.FieldRequiredException;
 import com.jordanluyke.azores.web.model.HttpServerRequest;
 import com.jordanluyke.azores.web.model.WebException;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.reactivex.rxjava3.core.Single;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import rx.Observable;
 
 import java.util.Optional;
 
@@ -27,65 +27,64 @@ public class AudioRoutes {
     public static class GetFrequency implements HttpRouteHandler {
         @Inject protected AudioManager audioManager;
         @Override
-        public Observable<ObjectNode> handle(Observable<HttpServerRequest> o) {
-            return Observable.just(audioManager.getAudioContext().getJsonInfo());
+        public Single<ObjectNode> handle(Single<HttpServerRequest> o) {
+            return Single.just(audioManager.getAudioContext().getJsonInfo());
         }
     }
 
     public static class SetFrequency implements HttpRouteHandler {
         @Inject protected AudioManager audioManager;
         @Override
-        public Observable<ObjectNode> handle(Observable<HttpServerRequest> o) {
+        public Single<ObjectNode> handle(Single<HttpServerRequest> o) {
             return o.flatMap(req -> {
                 if(!req.getBody().isPresent())
-                    return Observable.error(new WebException(HttpResponseStatus.BAD_REQUEST));
+                    return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
                 JsonNode body = req.getBody().get();
-                Optional<String> type = NodeUtil.get(body, "type");
+                Optional<String> type = NodeUtil.get("type", body);
                 if(!type.isPresent())
-                    return Observable.error(new FieldRequiredException("type"));
+                    return Single.error(new FieldRequiredException("type"));
 
                 if(type.get().equalsIgnoreCase(AudioType.TONE.toString())) {
-                    Optional<String> frequency = NodeUtil.get(body, "frequency");
+                    Optional<String> frequency = NodeUtil.get("frequency", body);
                     if(!frequency.isPresent())
-                        return Observable.error(new FieldRequiredException("frequency"));
+                        return Single.error(new FieldRequiredException("frequency"));
                     try {
                         return audioManager.setTone(Double.parseDouble(frequency.get()));
                     } catch(NumberFormatException e) {
-                        return Observable.error(new WebException(HttpResponseStatus.BAD_REQUEST));
+                        return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
                     }
                 }
 
                 if(type.get().equalsIgnoreCase(AudioType.AM.toString())) {
-                    Optional<String> carrierFrequency = NodeUtil.get(body, "carrierFrequency");
-                    Optional<String> modulatorFrequency = NodeUtil.get(body, "modulatorFrequency");
+                    Optional<String> carrierFrequency = NodeUtil.get("carrierFrequency", body);
+                    Optional<String> modulatorFrequency = NodeUtil.get("modulatorFrequency", body);
                     if(!carrierFrequency.isPresent())
-                        return Observable.error(new FieldRequiredException("carrierFrequency"));
+                        return Single.error(new FieldRequiredException("carrierFrequency"));
                     if(!modulatorFrequency.isPresent())
-                        return Observable.error(new FieldRequiredException("modulatorFrequency"));
+                        return Single.error(new FieldRequiredException("modulatorFrequency"));
                     try {
                         return audioManager.setAM(Double.parseDouble(carrierFrequency.get()), Double.parseDouble(modulatorFrequency.get()));
                     } catch(NumberFormatException e) {
-                        return Observable.error(new WebException(HttpResponseStatus.BAD_REQUEST));
+                        return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
                     }
                 }
 
                 if(type.get().equalsIgnoreCase(AudioType.FM.toString())) {
-                    Optional<String> carrierFrequency = NodeUtil.get(body, "carrierFrequency");
-                    Optional<String> modulatorFrequency = NodeUtil.get(body, "modulatorFrequency");
+                    Optional<String> carrierFrequency = NodeUtil.get("carrierFrequency", body);
+                    Optional<String> modulatorFrequency = NodeUtil.get("modulatorFrequency", body);
                     if(!carrierFrequency.isPresent())
-                        return Observable.error(new FieldRequiredException("carrierFrequency"));
+                        return Single.error(new FieldRequiredException("carrierFrequency"));
                     if(!modulatorFrequency.isPresent())
-                        return Observable.error(new FieldRequiredException("modulatorFrequency"));
+                        return Single.error(new FieldRequiredException("modulatorFrequency"));
                     try {
                         return audioManager.setFM(Double.parseDouble(carrierFrequency.get()), Double.parseDouble(modulatorFrequency.get()));
                     } catch(NumberFormatException e) {
-                        return Observable.error(new WebException(HttpResponseStatus.BAD_REQUEST));
+                        return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
                     }
                 }
 
-                return Observable.error(new WebException(HttpResponseStatus.BAD_REQUEST));
+                return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
             })
-                    .defaultIfEmpty(null)
                     .map(AudioContext::getJsonInfo);
         }
     }

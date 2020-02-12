@@ -6,11 +6,11 @@ import com.jordanluyke.azores.audio.model.AudioType;
 import com.jordanluyke.azores.audio.tone.AmplitudeModulationContext;
 import com.jordanluyke.azores.audio.tone.FrequencyModulationContext;
 import com.jordanluyke.azores.audio.tone.ToneContext;
+import io.reactivex.rxjava3.core.Single;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import rx.Observable;
 
 /**
  * @author Jordan Luyke <jordanluyke@gmail.com>
@@ -23,8 +23,8 @@ public class AudioManagerImpl implements AudioManager {
     private AudioContext audioContext = new ToneContext();
 
     @Override
-    public Observable<AudioContext> setTone(double frequency) {
-        return Observable.defer(() -> {
+    public Single<AudioContext> setTone(double frequency) {
+        return Single.defer(() -> {
             if(audioContext.getAudioType() != AudioType.TONE) {
                 audioContext.stop();
                 audioContext = new ToneContext();
@@ -32,13 +32,13 @@ public class AudioManagerImpl implements AudioManager {
             ToneContext toneContext = (ToneContext) audioContext;
             toneContext.setFrequency(frequency);
             toneContext.start();
-            return Observable.just(toneContext);
+            return Single.just(toneContext);
         });
     }
 
     @Override
-    public Observable<AudioContext> setAM(double carrierFrequency, double modulatorFrequency) {
-        return Observable.defer(() -> {
+    public Single<AudioContext> setAM(double carrierFrequency, double modulatorFrequency) {
+        return Single.defer(() -> {
             if(audioContext.getAudioType() != AudioType.AM) {
                 audioContext.stop();
                 audioContext = new AmplitudeModulationContext();
@@ -47,13 +47,13 @@ public class AudioManagerImpl implements AudioManager {
             amContext.setCarrierFrequency(carrierFrequency);
             amContext.setModulatorFrequency(modulatorFrequency);
             amContext.start();
-            return Observable.just(amContext);
+            return Single.just(amContext);
         });
     }
 
     @Override
-    public Observable<AudioContext> setFM(double carrierFrequency, double modulatorFrequency) {
-        return Observable.defer(() -> {
+    public Single<AudioContext> setFM(double carrierFrequency, double modulatorFrequency) {
+        return Single.defer(() -> {
             if(audioContext.getAudioType() != AudioType.FM) {
                 audioContext.stop();
                 audioContext = new FrequencyModulationContext();
@@ -62,7 +62,7 @@ public class AudioManagerImpl implements AudioManager {
             fmContext.setCarrierFrequency(carrierFrequency);
             fmContext.setModulatorFrequency(modulatorFrequency);
             fmContext.start();
-            return Observable.just(fmContext);
+            return Single.just(fmContext);
         });
     }
 }
