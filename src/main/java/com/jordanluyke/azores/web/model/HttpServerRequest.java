@@ -17,7 +17,6 @@ import java.util.Optional;
 @Getter
 @Setter
 public class HttpServerRequest {
-
     private Map<String, String> queryParams = new HashMap<>();
     private Map<String, String> headers = new HashMap<>();
     private Optional<JsonNode> body = Optional.empty();

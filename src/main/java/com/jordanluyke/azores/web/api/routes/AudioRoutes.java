@@ -37,16 +37,16 @@ public class AudioRoutes {
         @Override
         public Single<ObjectNode> handle(Single<HttpServerRequest> o) {
             return o.flatMap(req -> {
-                if(!req.getBody().isPresent())
+                if(req.getBody().isEmpty())
                     return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
                 JsonNode body = req.getBody().get();
-                Optional<String> type = NodeUtil.get("type", body);
-                if(!type.isPresent())
+                Optional<String> type = NodeUtil.getString("type", body);
+                if(type.isEmpty())
                     return Single.error(new FieldRequiredException("type"));
 
                 if(type.get().equalsIgnoreCase(AudioType.TONE.toString())) {
-                    Optional<String> frequency = NodeUtil.get("frequency", body);
-                    if(!frequency.isPresent())
+                    Optional<String> frequency = NodeUtil.getString("frequency", body);
+                    if(frequency.isEmpty())
                         return Single.error(new FieldRequiredException("frequency"));
                     try {
                         return audioManager.setTone(Double.parseDouble(frequency.get()));
@@ -56,11 +56,11 @@ public class AudioRoutes {
                 }
 
                 if(type.get().equalsIgnoreCase(AudioType.AM.toString())) {
-                    Optional<String> carrierFrequency = NodeUtil.get("carrierFrequency", body);
-                    Optional<String> modulatorFrequency = NodeUtil.get("modulatorFrequency", body);
-                    if(!carrierFrequency.isPresent())
+                    Optional<String> carrierFrequency = NodeUtil.getString("carrierFrequency", body);
+                    Optional<String> modulatorFrequency = NodeUtil.getString("modulatorFrequency", body);
+                    if(carrierFrequency.isEmpty())
                         return Single.error(new FieldRequiredException("carrierFrequency"));
-                    if(!modulatorFrequency.isPresent())
+                    if(modulatorFrequency.isEmpty())
                         return Single.error(new FieldRequiredException("modulatorFrequency"));
                     try {
                         return audioManager.setAM(Double.parseDouble(carrierFrequency.get()), Double.parseDouble(modulatorFrequency.get()));
@@ -70,11 +70,11 @@ public class AudioRoutes {
                 }
 
                 if(type.get().equalsIgnoreCase(AudioType.FM.toString())) {
-                    Optional<String> carrierFrequency = NodeUtil.get("carrierFrequency", body);
-                    Optional<String> modulatorFrequency = NodeUtil.get("modulatorFrequency", body);
-                    if(!carrierFrequency.isPresent())
+                    Optional<String> carrierFrequency = NodeUtil.getString("carrierFrequency", body);
+                    Optional<String> modulatorFrequency = NodeUtil.getString("modulatorFrequency", body);
+                    if(carrierFrequency.isEmpty())
                         return Single.error(new FieldRequiredException("carrierFrequency"));
-                    if(!modulatorFrequency.isPresent())
+                    if(modulatorFrequency.isEmpty())
                         return Single.error(new FieldRequiredException("modulatorFrequency"));
                     try {
                         return audioManager.setFM(Double.parseDouble(carrierFrequency.get()), Double.parseDouble(modulatorFrequency.get()));

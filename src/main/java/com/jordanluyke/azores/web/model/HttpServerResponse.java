@@ -19,7 +19,6 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class HttpServerResponse {
-
     private HttpResponseStatus status;
     private ObjectNode body = new ObjectMapper().createObjectNode();
     private Map<String, String> headers = new HashMap<>();

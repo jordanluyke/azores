@@ -7,10 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.jordanluyke.azores.web.model.FieldRequiredException;
-import com.jordanluyke.azores.web.model.WebException;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.reactivex.rxjava3.core.Single;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,55 +42,95 @@ public class NodeUtil {
         }
     }
 
-    public static byte[] writeValueAsBytes(Object o) {
+    public static JsonNode getJsonNode(String json) {
         try {
-            return mapper.writeValueAsBytes(o);
+            return mapper.readTree(json);
+        } catch(IOException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public static byte[] writeValueAsBytes(JsonNode node) {
+        try {
+            return mapper.writeValueAsBytes(node);
         } catch(JsonProcessingException e) {
             throw new RuntimeException(e.getMessage());
         }
     }
 
-    public static <T> Single<T> parseNodeInto(Class<T> clazz, JsonNode body) {
+    public static String writeValueAsString(JsonNode node) {
         try {
-            return Single.just(mapper.treeToValue(body, clazz));
-        } catch(Exception e) {
-            logger.error("Json serialize fail: {} {}", clazz, body);
+            return mapper.writeValueAsString(node);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public static <T> T parseNodeInto(Class<T> clazz, JsonNode body) {
+        try {
+            return mapper.treeToValue(body, clazz);
+        } catch(JsonProcessingException e) {
+            logger.error("Json serialize fail: {} {}", clazz.getSimpleName(), writeValueAsString(body));
             for(Field field : clazz.getFields()) {
                 field.setAccessible(true);
                 String name = field.getName();
                 if(body.get(name) == null)
-                    return Single.error(new FieldRequiredException(name));
+                    throw new RuntimeException("Field not found: " + name);
             }
-            return Single.error(new WebException(HttpResponseStatus.INTERNAL_SERVER_ERROR));
+            throw new RuntimeException(e.getMessage());
         }
     }
 
-    public static <T> Single<T> parseNodeInto(Class<T> clazz, Optional<JsonNode> body) {
-        return body.map(jsonNode -> parseNodeInto(clazz, jsonNode)).orElseGet(() -> Single.error(new WebException(HttpResponseStatus.BAD_REQUEST, "Empty body")));
-    }
-
-    public static Single<JsonNode> parseObjectIntoNode(Object object) {
-        try {
-            return Single.just(mapper.valueToTree(object));
-        } catch(IllegalArgumentException e) {
-            e.printStackTrace();
-            logger.error("Object parse failed");
-            return Single.error(new WebException(HttpResponseStatus.INTERNAL_SERVER_ERROR));
-        }
-    }
-
-    public static Optional<String> get(String field, JsonNode node) {
-        JsonNode fieldNode = node.get(field);
-        if(fieldNode == null || fieldNode.isNull())
+    public static Optional<JsonNode> get(String field, JsonNode node) {
+        JsonNode childNode = node.get(field);
+        if(childNode == null || childNode.isNull())
             return Optional.empty();
-        return Optional.of(fieldNode.asText());
+        return Optional.of(childNode);
+    }
+
+    public static JsonNode getOrThrow(String field, JsonNode node) {
+        Optional<JsonNode> childNode = get(field, node);
+        if(childNode.isEmpty())
+            throw new RuntimeException("Field not present: " + field);
+        return childNode.get();
+    }
+
+    public static Optional<String> getString(String field, JsonNode node) {
+        JsonNode childNode = node.get(field);
+        if(childNode == null || childNode.isNull())
+            return Optional.empty();
+        return Optional.of(childNode.asText());
+    }
+
+    public static String getStringOrThrow(String field, JsonNode node) {
+        Optional<String> value = getString(field, node);
+        if(value.isEmpty())
+            throw new RuntimeException("Field not present: " + field);
+        return value.get();
     }
 
     public static Optional<Boolean> getBoolean(String field, JsonNode node) {
-        return get(field, node).map(Boolean::valueOf);
+        JsonNode childNode = node.get(field);
+        if(childNode == null || childNode.isNull())
+            return Optional.empty();
+        return Optional.of(childNode.booleanValue());
+    }
+
+    public static Boolean getBooleanOrThrow(String field, JsonNode node) {
+        Optional<Boolean> value = getBoolean(field, node);
+        if(value.isEmpty())
+            throw new RuntimeException("Field not present: " + field);
+        return value.get();
     }
 
     public static Optional<Integer> getInteger(String field, JsonNode node) {
-        return get(field, node).map(Integer::parseInt);
+        return getString(field, node).map(Integer::parseInt);
+    }
+
+    public static Integer getIntegerOrThrow(String field, JsonNode node) {
+        Optional<Integer> value = getInteger(field, node);
+        if(value.isEmpty())
+            throw new RuntimeException("Field not present: " + field);
+        return value.get();
     }
 }
