@@ -1,5 +1,6 @@
 package com.jordanluyke.azores.audio.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jsyn.unitgen.SineOscillatorPhaseModulated;
 import lombok.Getter;
 
@@ -10,14 +11,14 @@ import java.time.ZoneId;
  */
 @Getter
 public class FrequencyModulationContext extends ModulationContext {
-    private final SineOscillatorPhaseModulated carrierOscillator = new SineOscillatorPhaseModulated();
-    private final AudioType audioType = AudioType.FM;
+    @JsonIgnore private final SineOscillatorPhaseModulated carrierOscillator = new SineOscillatorPhaseModulated();
+    private final AudioType type = AudioType.FM;
 
     public FrequencyModulationContext(double carrierFrequency, double modulatorFrequency) {
         super(carrierFrequency, modulatorFrequency);
     }
 
-    public FrequencyModulationContext(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to) {
-        super(carrierFrequency, modulatorFrequency, zoneId, from, to);
+    public FrequencyModulationContext(double carrierFrequency, double modulatorFrequency, ZoneId zone, String from, String to) {
+        super(carrierFrequency, modulatorFrequency, zone, from, to);
     }
 }

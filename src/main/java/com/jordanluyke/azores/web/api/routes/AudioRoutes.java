@@ -30,15 +30,15 @@ public class AudioRoutes {
     public static class GetFrequency implements HttpRouteHandler {
         @Inject protected AudioManager audioManager;
         @Override
-        public Single<ObjectNode> handle(Single<HttpServerRequest> o) {
-            return Single.just(audioManager.getAudioContext().getInfo());
+        public Single<AudioContext> handle(Single<HttpServerRequest> o) {
+            return Single.just(audioManager.getAudioContext());
         }
     }
 
     public static class SetFrequency implements HttpRouteHandler {
         @Inject protected AudioManager audioManager;
         @Override
-        public Single<ObjectNode> handle(Single<HttpServerRequest> o) {
+        public Single<AudioContext> handle(Single<HttpServerRequest> o) {
             return o.flatMap(req -> {
                 if(req.getBody().isEmpty())
                     return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST, "Body missing"));
@@ -114,8 +114,7 @@ public class AudioRoutes {
                 }
 
                 return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
-            })
-                    .map(AudioContext::getInfo);
+            });
         }
     }
 }

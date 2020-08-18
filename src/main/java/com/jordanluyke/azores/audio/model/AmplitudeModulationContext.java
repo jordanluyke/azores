@@ -1,18 +1,18 @@
 package com.jordanluyke.azores.audio.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jsyn.unitgen.SineOscillator;
 import lombok.Getter;
 
 import java.time.ZoneId;
-import java.util.Optional;
 
 /**
  * @author Jordan Luyke <jordanluyke@gmail.com>
  */
 @Getter
 public class AmplitudeModulationContext extends ModulationContext {
-    private final SineOscillator carrierOscillator = new SineOscillator();
-    private final AudioType audioType = AudioType.AM;
+    @JsonIgnore private final SineOscillator carrierOscillator = new SineOscillator();
+    private final AudioType type = AudioType.AM;
 
     public AmplitudeModulationContext(double carrierFrequency, double modulatorFrequency) {
         super(carrierFrequency, modulatorFrequency);

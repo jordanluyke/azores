@@ -112,7 +112,7 @@ public class AudioManagerImpl implements AudioManager {
 
     private void startContext(AudioContext audioContext) {
         this.audioContext = audioContext;
-        if(audioContext.getAudioType() == AudioType.TONE) {
+        if(audioContext.getType() == AudioType.TONE) {
             ToneContext toneContext = (ToneContext) audioContext;
             synth.add(toneContext.getOscillator());
             toneContext.getOscillator().output.connect(0, lineOut.input, 0);
@@ -120,20 +120,20 @@ public class AudioManagerImpl implements AudioManager {
             toneContext.getOscillator().amplitude.set(1);
             toneContext.getOscillator().frequency.set(toneContext.getFrequency());
             toneContext.getOscillator().start();
-        } else if(audioContext.getAudioType() == AudioType.AM || audioContext.getAudioType() == AudioType.FM) {
+        } else if(audioContext.getType() == AudioType.AM || audioContext.getType() == AudioType.FM) {
             ModulationContext modulationContext = (ModulationContext) audioContext;
             synth.add(modulationContext.getCarrierOscillator());
             synth.add(modulationContext.getModulatorOscillator());
             modulationContext.getCarrierOscillator().amplitude.set(1);
             modulationContext.getCarrierOscillator().frequency.set(modulationContext.getCarrierFrequency());
             modulationContext.getModulatorOscillator().amplitude.set(1);
-            if(audioContext.getAudioType() == AudioType.AM) {
+            if(audioContext.getType() == AudioType.AM) {
                 modulationContext.getModulatorOscillator().frequency.set(modulationContext.getModulatorFrequency() / 2.0);
                 AmplitudeModulationContext amContext = (AmplitudeModulationContext) audioContext;
                 amContext.getCarrierOscillator().output.connect(amContext.getModulatorOscillator().amplitude);
                 amContext.getModulatorOscillator().output.connect(0, lineOut.input, 0);
                 amContext.getModulatorOscillator().output.connect(0, lineOut.input, 1);
-            } else if(audioContext.getAudioType() == AudioType.FM) {
+            } else if(audioContext.getType() == AudioType.FM) {
                 modulationContext.getModulatorOscillator().frequency.set(modulationContext.getModulatorFrequency());
                 FrequencyModulationContext fmContext = (FrequencyModulationContext) audioContext;
                 fmContext.getModulatorOscillator().output.connect(fmContext.getCarrierOscillator().modulation);
@@ -152,12 +152,12 @@ public class AudioManagerImpl implements AudioManager {
     private void stopContext(AudioContext audioContext) {
         synth.stop();
         lineOut.stop();
-        if(audioContext.getAudioType() == AudioType.TONE) {
+        if(audioContext.getType() == AudioType.TONE) {
             ToneContext toneContext = (ToneContext) audioContext;
             toneContext.getOscillator().stop();
             toneContext.getOscillator().output.disconnectAll();
             synth.remove(toneContext.getOscillator());
-        } else if(audioContext.getAudioType() == AudioType.AM || audioContext.getAudioType() == AudioType.FM) {
+        } else if(audioContext.getType() == AudioType.AM || audioContext.getType() == AudioType.FM) {
             ModulationContext modulationContext = (ModulationContext) audioContext;
             modulationContext.getModulatorOscillator().stop();
             modulationContext.getModulatorOscillator().output.disconnectAll();
@@ -177,11 +177,11 @@ public class AudioManagerImpl implements AudioManager {
     }
 
     private Disposable createTimePeriodDisposable(AudioContext audioContext) {
-        if(audioContext.getZoneId().isEmpty() || audioContext.getFrom().isEmpty() || audioContext.getTo().isEmpty())
+        if(audioContext.getZone().isEmpty() || audioContext.getFrom().isEmpty() || audioContext.getTo().isEmpty())
             throw new RuntimeException("zone/from/to empty");
         return Observable.interval(0, intervalPeriod, intervalUnit)
                 .doOnNext(Void -> {
-                    if(isWithinTimePeriod(audioContext.getZoneId().get(), audioContext.getFrom().get(), audioContext.getTo().get())) {
+                    if(isWithinTimePeriod(audioContext.getZone().get(), audioContext.getFrom().get(), audioContext.getTo().get())) {
                         if(!started)
                             startContext(audioContext);
                     } else {
