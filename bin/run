@@ -1,7 +1,0 @@
-#!/bin/bash
-
-set -e
-
-JAR=target/azores-1.0-SNAPSHOT-jar-with-dependencies.jar
-
-java -jar ${JAR}

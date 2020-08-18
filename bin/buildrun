@@ -8,4 +8,6 @@ fi
 
 JAR=target/azores-1.0-SNAPSHOT-jar-with-dependencies.jar
 
-java -jar ${JAR}
+if [ "$1" != "-b" ]; then
+  java -jar ${JAR}
+fi

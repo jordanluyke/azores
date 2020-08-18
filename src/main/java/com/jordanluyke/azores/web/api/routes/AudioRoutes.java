@@ -16,6 +16,9 @@ import io.reactivex.rxjava3.core.Single;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.time.DateTimeException;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
 /**
@@ -28,7 +31,7 @@ public class AudioRoutes {
         @Inject protected AudioManager audioManager;
         @Override
         public Single<ObjectNode> handle(Single<HttpServerRequest> o) {
-            return Single.just(audioManager.getAudioContext().getJsonInfo());
+            return Single.just(audioManager.getAudioContext().getInfo());
         }
     }
 
@@ -38,24 +41,56 @@ public class AudioRoutes {
         public Single<ObjectNode> handle(Single<HttpServerRequest> o) {
             return o.flatMap(req -> {
                 if(req.getBody().isEmpty())
-                    return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
+                    return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST, "Body missing"));
+
                 JsonNode body = req.getBody().get();
                 Optional<String> type = NodeUtil.getString("type", body);
                 if(type.isEmpty())
                     return Single.error(new FieldRequiredException("type"));
 
-                if(type.get().equalsIgnoreCase(AudioType.TONE.toString())) {
+                AudioType audioType;
+                try {
+                    audioType = AudioType.valueOf(type.get().toUpperCase());
+                } catch(IllegalArgumentException e) {
+                    return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
+                }
+
+                Optional<ZoneId> zoneId = Optional.empty();
+                Optional<String> zone = NodeUtil.getString("zone", body);
+                if(zone.isPresent()) {
+                    try {
+                        zoneId = Optional.of(ZoneId.of(zone.get()));
+                    } catch(DateTimeException e) {
+                        return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST, "Invalid zone. Example: America/Denver"));
+                    }
+                }
+                Optional<String> from = NodeUtil.getString("from", body);
+                Optional<String> to = NodeUtil.getString("to", body);
+                if(zoneId.isPresent() && (from.isEmpty() || to.isEmpty()))
+                    return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST, "zone present but from/to empty"));
+                if((from.isPresent() || to.isPresent()) && zoneId.isEmpty())
+                    return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST, "from/to present but zone empty"));
+                if(zoneId.isPresent()) {
+                    try {
+                        audioManager.getTimeFormat().parse(from.get());
+                        audioManager.getTimeFormat().parse(to.get());
+                    } catch(DateTimeParseException e) {
+                        return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST, "Bad time format. Example: 09:00"));
+                    }
+                }
+
+                if(audioType == AudioType.TONE) {
                     Optional<String> frequency = NodeUtil.getString("frequency", body);
                     if(frequency.isEmpty())
                         return Single.error(new FieldRequiredException("frequency"));
                     try {
+                        if(zoneId.isPresent())
+                            return audioManager.setTone(Double.parseDouble(frequency.get()), zoneId.get(), from.get(), to.get());
                         return audioManager.setTone(Double.parseDouble(frequency.get()));
                     } catch(NumberFormatException e) {
                         return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
                     }
-                }
-
-                if(type.get().equalsIgnoreCase(AudioType.AM.toString())) {
+                } else if(audioType == AudioType.AM || audioType == AudioType.FM) {
                     Optional<String> carrierFrequency = NodeUtil.getString("carrierFrequency", body);
                     Optional<String> modulatorFrequency = NodeUtil.getString("modulatorFrequency", body);
                     if(carrierFrequency.isEmpty())
@@ -63,21 +98,16 @@ public class AudioRoutes {
                     if(modulatorFrequency.isEmpty())
                         return Single.error(new FieldRequiredException("modulatorFrequency"));
                     try {
-                        return audioManager.setAM(Double.parseDouble(carrierFrequency.get()), Double.parseDouble(modulatorFrequency.get()));
-                    } catch(NumberFormatException e) {
-                        return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
-                    }
-                }
-
-                if(type.get().equalsIgnoreCase(AudioType.FM.toString())) {
-                    Optional<String> carrierFrequency = NodeUtil.getString("carrierFrequency", body);
-                    Optional<String> modulatorFrequency = NodeUtil.getString("modulatorFrequency", body);
-                    if(carrierFrequency.isEmpty())
-                        return Single.error(new FieldRequiredException("carrierFrequency"));
-                    if(modulatorFrequency.isEmpty())
-                        return Single.error(new FieldRequiredException("modulatorFrequency"));
-                    try {
-                        return audioManager.setFM(Double.parseDouble(carrierFrequency.get()), Double.parseDouble(modulatorFrequency.get()));
+                        double carrierFrequencyDouble = Double.parseDouble(carrierFrequency.get());
+                        double modulatorFrequencyDouble = Double.parseDouble(modulatorFrequency.get());
+                        if(audioType == AudioType.AM) {
+                            if(zoneId.isPresent())
+                                return audioManager.setAM(carrierFrequencyDouble, modulatorFrequencyDouble, zoneId.get(), from.get(), to.get());
+                            return audioManager.setAM(carrierFrequencyDouble, modulatorFrequencyDouble);
+                        }
+                        if(zoneId.isPresent())
+                            return audioManager.setFM(carrierFrequencyDouble, modulatorFrequencyDouble, zoneId.get(), from.get(), to.get());
+                        return audioManager.setFM(carrierFrequencyDouble, modulatorFrequencyDouble);
                     } catch(NumberFormatException e) {
                         return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
                     }
@@ -85,7 +115,7 @@ public class AudioRoutes {
 
                 return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
             })
-                    .map(AudioContext::getJsonInfo);
+                    .map(AudioContext::getInfo);
         }
     }
 }
