@@ -194,11 +194,11 @@ public class AudioManagerImpl implements AudioManager {
 
     private boolean isWithinTimePeriod(ZoneId zoneId, String from, String to) {
         LocalDateTime fromTimeToday = LocalTime.parse(from)
-                .atDate(LocalDate.now())
+                .atDate(LocalDate.now(zoneId))
                 .atZone(zoneId)
                 .toLocalDateTime();
         LocalDateTime toTimeToday = LocalTime.parse(to)
-                .atDate(LocalDate.now())
+                .atDate(LocalDate.now(zoneId))
                 .atZone(zoneId)
                 .toLocalDateTime();
         LocalDateTime now = LocalDateTime.now(zoneId);
