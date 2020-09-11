@@ -38,7 +38,6 @@ public class AudioManagerImpl implements AudioManager {
     public final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm");
     private Optional<Disposable> timePeriodDisposable = Optional.empty();
     private AudioContext audioContext = new ToneContext(1.45);
-    private boolean started = false;
 
     public AudioManagerImpl() {
         synth.add(lineOut);
@@ -47,9 +46,10 @@ public class AudioManagerImpl implements AudioManager {
     @Override
     public Single<ToneContext> setTone(double frequency) {
         return Single.defer(() -> {
-            stopContext();
+            stop();
             ToneContext context = new ToneContext(frequency);
-            startContext(context);
+            audioContext = context;
+            start();
             return Single.just(context);
         });
     }
@@ -57,9 +57,10 @@ public class AudioManagerImpl implements AudioManager {
     @Override
     public Single<ToneContext> setTone(double frequency, ZoneId zoneId, String from, String to) {
         return Single.defer(() -> {
-            stopContext();
+            stop();
             ToneContext context = new ToneContext(frequency, zoneId, from, to);
-            timePeriodDisposable = Optional.of(createTimePeriodDisposable(context));
+            audioContext = context;
+            timePeriodDisposable = Optional.of(createTimePeriodDisposable());
             return Single.just(context);
         });
     }
@@ -67,9 +68,10 @@ public class AudioManagerImpl implements AudioManager {
     @Override
     public Single<AmplitudeModulationContext> setAM(double carrierFrequency, double modulatorFrequency) {
         return Single.defer(() -> {
-            stopContext();
+            stop();
             AmplitudeModulationContext context = new AmplitudeModulationContext(carrierFrequency, modulatorFrequency);
-            startContext(context);
+            audioContext = context;
+            start();
             return Single.just(context);
         });
     }
@@ -77,9 +79,10 @@ public class AudioManagerImpl implements AudioManager {
     @Override
     public Single<AmplitudeModulationContext> setAM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to) {
         return Single.defer(() -> {
-            stopContext();
+            stop();
             AmplitudeModulationContext context = new AmplitudeModulationContext(carrierFrequency, modulatorFrequency, zoneId, from, to);
-            timePeriodDisposable = Optional.of(createTimePeriodDisposable(context));
+            audioContext = context;
+            timePeriodDisposable = Optional.of(createTimePeriodDisposable());
             return Single.just(context);
         });
     }
@@ -87,9 +90,10 @@ public class AudioManagerImpl implements AudioManager {
     @Override
     public Single<FrequencyModulationContext> setFM(double carrierFrequency, double modulatorFrequency) {
         return Single.defer(() -> {
-            stopContext();
+            stop();
             FrequencyModulationContext context = new FrequencyModulationContext(carrierFrequency, modulatorFrequency);
-            startContext(context);
+            audioContext = context;
+            start();
             return Single.just(context);
         });
     }
@@ -97,21 +101,15 @@ public class AudioManagerImpl implements AudioManager {
     @Override
     public Single<FrequencyModulationContext> setFM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to) {
         return Single.defer(() -> {
-            stopContext();
+            stop();
             FrequencyModulationContext context = new FrequencyModulationContext(carrierFrequency, modulatorFrequency, zoneId, from, to);
-            timePeriodDisposable = Optional.of(createTimePeriodDisposable(context));
+            audioContext = context;
+            timePeriodDisposable = Optional.of(createTimePeriodDisposable());
             return Single.just(context);
         });
     }
 
-    private void stopContext() {
-        clearDisposable();
-        if(started)
-            stopContext(audioContext);
-    }
-
-    private void startContext(AudioContext audioContext) {
-        this.audioContext = audioContext;
+    private void start() {
         if(audioContext.getType() == AudioType.TONE) {
             ToneContext toneContext = (ToneContext) audioContext;
             synth.add(toneContext.getOscillator());
@@ -146,27 +144,30 @@ public class AudioManagerImpl implements AudioManager {
 
         synth.start();
         lineOut.start();
-        started = true;
+        audioContext.setOn(true);
     }
 
-    private void stopContext(AudioContext audioContext) {
-        synth.stop();
-        lineOut.stop();
-        if(audioContext.getType() == AudioType.TONE) {
-            ToneContext toneContext = (ToneContext) audioContext;
-            toneContext.getOscillator().stop();
-            toneContext.getOscillator().output.disconnectAll();
-            synth.remove(toneContext.getOscillator());
-        } else if(audioContext.getType() == AudioType.AM || audioContext.getType() == AudioType.FM) {
-            ModulationContext modulationContext = (ModulationContext) audioContext;
-            modulationContext.getModulatorOscillator().stop();
-            modulationContext.getModulatorOscillator().output.disconnectAll();
-            modulationContext.getCarrierOscillator().stop();
-            modulationContext.getCarrierOscillator().output.disconnectAll();
-            synth.remove(modulationContext.getCarrierOscillator());
-            synth.remove(modulationContext.getModulatorOscillator());
+    private void stop() {
+        clearDisposable();
+        if(audioContext.isOn()) {
+            synth.stop();
+            lineOut.stop();
+            if(audioContext.getType() == AudioType.TONE) {
+                ToneContext toneContext = (ToneContext) audioContext;
+                toneContext.getOscillator().stop();
+                toneContext.getOscillator().output.disconnectAll();
+                synth.remove(toneContext.getOscillator());
+            } else if(audioContext.getType() == AudioType.AM || audioContext.getType() == AudioType.FM) {
+                ModulationContext modulationContext = (ModulationContext) audioContext;
+                modulationContext.getModulatorOscillator().stop();
+                modulationContext.getModulatorOscillator().output.disconnectAll();
+                modulationContext.getCarrierOscillator().stop();
+                modulationContext.getCarrierOscillator().output.disconnectAll();
+                synth.remove(modulationContext.getCarrierOscillator());
+                synth.remove(modulationContext.getModulatorOscillator());
+            }
+            audioContext.setOn(false);
         }
-        started = false;
     }
 
     private void clearDisposable() {
@@ -176,17 +177,17 @@ public class AudioManagerImpl implements AudioManager {
         }
     }
 
-    private Disposable createTimePeriodDisposable(AudioContext audioContext) {
+    private Disposable createTimePeriodDisposable() {
         if(audioContext.getZone().isEmpty() || audioContext.getFrom().isEmpty() || audioContext.getTo().isEmpty())
             throw new RuntimeException("zone/from/to empty");
         return Observable.interval(0, intervalPeriod, intervalUnit)
                 .doOnNext(Void -> {
                     if(isWithinTimePeriod(audioContext.getZone().get(), audioContext.getFrom().get(), audioContext.getTo().get())) {
-                        if(!started)
-                            startContext(audioContext);
+                        if(!audioContext.isOn())
+                            start();
                     } else {
-                        if(started)
-                            stopContext(audioContext);
+                        if(audioContext.isOn())
+                            stop();
                     }
                 })
                 .subscribe(Void -> {}, err -> logger.error(err.getMessage()));

@@ -1,5 +1,6 @@
 package com.jordanluyke.azores.audio.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +14,8 @@ import java.util.Optional;
 @Setter
 public abstract class AudioContext {
     protected AudioType type;
-    protected Optional<ZoneId> zone = Optional.empty();
-    protected Optional<String> from = Optional.empty();
-    protected Optional<String> to = Optional.empty();
+    @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<ZoneId> zone = Optional.empty();
+    @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<String> from = Optional.empty();
+    @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<String> to = Optional.empty();
+    protected boolean on = false;
 }
