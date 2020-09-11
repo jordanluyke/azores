@@ -15,10 +15,12 @@ import java.time.format.DateTimeFormatter;
 public interface AudioManager {
     AudioContext getAudioContext();
     DateTimeFormatter getTimeFormat();
-    Single<ToneContext> setTone(double frequency);
-    Single<ToneContext> setTone(double frequency, ZoneId zoneId, String from, String to);
-    Single<AmplitudeModulationContext> setAM(double carrierFrequency, double modulatorFrequency);
-    Single<AmplitudeModulationContext> setAM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to);
-    Single<FrequencyModulationContext> setFM(double carrierFrequency, double modulatorFrequency);
-    Single<FrequencyModulationContext> setFM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to);
+    Single<AudioContext> setTone(double frequency);
+    Single<AudioContext> setTone(double frequency, ZoneId zoneId, String from, String to);
+    Single<AudioContext> setAM(double carrierFrequency, double modulatorFrequency);
+    Single<AudioContext> setAM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to);
+    Single<AudioContext> setFM(double carrierFrequency, double modulatorFrequency);
+    Single<AudioContext> setFM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to);
+    Single<AudioContext> start();
+    Single<AudioContext> stop();
 }

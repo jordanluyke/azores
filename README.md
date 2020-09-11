@@ -32,6 +32,9 @@
         to: "22:00"
     }
     ```
+  
+- POST /frequency/start
+- POST /frequency/stop
 
 ### About
 

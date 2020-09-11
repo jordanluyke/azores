@@ -14,6 +14,7 @@ import java.util.Optional;
  */
 @Getter
 @Setter
+@ToString
 public class ToneContext extends AudioContext {
     private static final Logger logger = LogManager.getLogger(ToneContext.class);
 

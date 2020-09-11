@@ -19,7 +19,9 @@ public class ApiV1 implements Api {
         return Arrays.asList(
                 new HttpRoute("/status", HttpMethod.GET, SystemRoutes.GetStatus.class),
                 new HttpRoute("/frequency", HttpMethod.GET, AudioRoutes.GetFrequency.class),
-                new HttpRoute("/frequency", HttpMethod.POST, AudioRoutes.SetFrequency.class)
+                new HttpRoute("/frequency", HttpMethod.POST, AudioRoutes.SetFrequency.class),
+                new HttpRoute("/frequency/start", HttpMethod.POST, AudioRoutes.StartFrequency.class),
+                new HttpRoute("/frequency/stop", HttpMethod.POST, AudioRoutes.StopFrequency.class)
         );
     }
 }

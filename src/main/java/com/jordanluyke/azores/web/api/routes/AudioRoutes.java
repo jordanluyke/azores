@@ -117,4 +117,20 @@ public class AudioRoutes {
             });
         }
     }
+
+    public static class StartFrequency implements HttpRouteHandler {
+        @Inject protected AudioManager audioManager;
+        @Override
+        public Single<AudioContext> handle(Single<HttpServerRequest> o) {
+            return audioManager.start();
+        }
+    }
+
+    public static class StopFrequency implements HttpRouteHandler {
+        @Inject protected AudioManager audioManager;
+        @Override
+        public Single<AudioContext> handle(Single<HttpServerRequest> o) {
+            return audioManager.stop();
+        }
+    }
 }

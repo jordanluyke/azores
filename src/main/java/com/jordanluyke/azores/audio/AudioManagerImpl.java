@@ -44,130 +44,128 @@ public class AudioManagerImpl implements AudioManager {
     }
 
     @Override
-    public Single<ToneContext> setTone(double frequency) {
-        return Single.defer(() -> {
-            stop();
-            ToneContext context = new ToneContext(frequency);
-            audioContext = context;
-            start();
-            return Single.just(context);
-        });
+    public Single<AudioContext> setTone(double frequency) {
+        return stop()
+                .doOnSuccess(Void -> audioContext = new ToneContext(frequency))
+                .flatMap(Void -> start());
     }
 
     @Override
-    public Single<ToneContext> setTone(double frequency, ZoneId zoneId, String from, String to) {
-        return Single.defer(() -> {
-            stop();
-            ToneContext context = new ToneContext(frequency, zoneId, from, to);
-            audioContext = context;
-            timePeriodDisposable = Optional.of(createTimePeriodDisposable());
-            return Single.just(context);
-        });
+    public Single<AudioContext> setTone(double frequency, ZoneId zoneId, String from, String to) {
+        return stop()
+                .doOnSuccess(a -> logger.info("1 {}", a))
+                .doOnSuccess(Void -> {
+                    audioContext = new ToneContext(frequency, zoneId, from, to);
+                    timePeriodDisposable = Optional.of(createTimePeriodDisposable());
+                })
+                .doOnSuccess(a -> logger.info("2 {}", a))
+                .flatMap(Void -> start())
+                .doOnSuccess(a -> logger.info("3 {}", a));
     }
 
     @Override
-    public Single<AmplitudeModulationContext> setAM(double carrierFrequency, double modulatorFrequency) {
-        return Single.defer(() -> {
-            stop();
-            AmplitudeModulationContext context = new AmplitudeModulationContext(carrierFrequency, modulatorFrequency);
-            audioContext = context;
-            start();
-            return Single.just(context);
-        });
+    public Single<AudioContext> setAM(double carrierFrequency, double modulatorFrequency) {
+        return stop()
+                .doOnSuccess(Void -> audioContext = new AmplitudeModulationContext(carrierFrequency, modulatorFrequency))
+                .flatMap(Void -> start());
     }
 
     @Override
-    public Single<AmplitudeModulationContext> setAM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to) {
-        return Single.defer(() -> {
-            stop();
-            AmplitudeModulationContext context = new AmplitudeModulationContext(carrierFrequency, modulatorFrequency, zoneId, from, to);
-            audioContext = context;
-            timePeriodDisposable = Optional.of(createTimePeriodDisposable());
-            return Single.just(context);
-        });
+    public Single<AudioContext> setAM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to) {
+        return stop()
+                .doOnSuccess(Void -> {
+                    audioContext = new AmplitudeModulationContext(carrierFrequency, modulatorFrequency, zoneId, from, to);
+                    timePeriodDisposable = Optional.of(createTimePeriodDisposable());
+                })
+                .flatMap(Void -> start());
     }
 
     @Override
-    public Single<FrequencyModulationContext> setFM(double carrierFrequency, double modulatorFrequency) {
-        return Single.defer(() -> {
-            stop();
-            FrequencyModulationContext context = new FrequencyModulationContext(carrierFrequency, modulatorFrequency);
-            audioContext = context;
-            start();
-            return Single.just(context);
-        });
+    public Single<AudioContext> setFM(double carrierFrequency, double modulatorFrequency) {
+        return stop()
+                .doOnSuccess(Void -> audioContext = new FrequencyModulationContext(carrierFrequency, modulatorFrequency))
+                .flatMap(Void -> start());
     }
 
     @Override
-    public Single<FrequencyModulationContext> setFM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to) {
-        return Single.defer(() -> {
-            stop();
-            FrequencyModulationContext context = new FrequencyModulationContext(carrierFrequency, modulatorFrequency, zoneId, from, to);
-            audioContext = context;
-            timePeriodDisposable = Optional.of(createTimePeriodDisposable());
-            return Single.just(context);
-        });
+    public Single<AudioContext> setFM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to) {
+        return stop()
+                .doOnSuccess(Void -> {
+                    audioContext = new FrequencyModulationContext(carrierFrequency, modulatorFrequency, zoneId, from, to);
+                    timePeriodDisposable = Optional.of(createTimePeriodDisposable());
+                })
+                .flatMap(Void -> start());
     }
 
-    private void start() {
-        if(audioContext.getType() == AudioType.TONE) {
-            ToneContext toneContext = (ToneContext) audioContext;
-            synth.add(toneContext.getOscillator());
-            toneContext.getOscillator().output.connect(0, lineOut.input, 0);
-            toneContext.getOscillator().output.connect(0, lineOut.input, 1);
-            toneContext.getOscillator().amplitude.set(1);
-            toneContext.getOscillator().frequency.set(toneContext.getFrequency());
-            toneContext.getOscillator().start();
-        } else if(audioContext.getType() == AudioType.AM || audioContext.getType() == AudioType.FM) {
-            ModulationContext modulationContext = (ModulationContext) audioContext;
-            synth.add(modulationContext.getCarrierOscillator());
-            synth.add(modulationContext.getModulatorOscillator());
-            modulationContext.getCarrierOscillator().amplitude.set(1);
-            modulationContext.getCarrierOscillator().frequency.set(modulationContext.getCarrierFrequency());
-            modulationContext.getModulatorOscillator().amplitude.set(1);
-            if(audioContext.getType() == AudioType.AM) {
-                modulationContext.getModulatorOscillator().frequency.set(modulationContext.getModulatorFrequency() / 2.0);
-                AmplitudeModulationContext amContext = (AmplitudeModulationContext) audioContext;
-                amContext.getCarrierOscillator().output.connect(amContext.getModulatorOscillator().amplitude);
-                amContext.getModulatorOscillator().output.connect(0, lineOut.input, 0);
-                amContext.getModulatorOscillator().output.connect(0, lineOut.input, 1);
-            } else if(audioContext.getType() == AudioType.FM) {
-                modulationContext.getModulatorOscillator().frequency.set(modulationContext.getModulatorFrequency());
-                FrequencyModulationContext fmContext = (FrequencyModulationContext) audioContext;
-                fmContext.getModulatorOscillator().output.connect(fmContext.getCarrierOscillator().modulation);
-                fmContext.getCarrierOscillator().output.connect(0, lineOut.input, 0);
-                fmContext.getCarrierOscillator().output.connect(0, lineOut.input, 1);
+    @Override
+    public Single<AudioContext> start() {
+        return Single.defer(() -> {
+            if(!audioContext.isOn()) {
+                if(audioContext.getType() == AudioType.TONE) {
+                    ToneContext toneContext = (ToneContext) audioContext;
+                    synth.add(toneContext.getOscillator());
+                    toneContext.getOscillator().output.connect(0, lineOut.input, 0);
+                    toneContext.getOscillator().output.connect(0, lineOut.input, 1);
+                    toneContext.getOscillator().amplitude.set(1);
+                    toneContext.getOscillator().frequency.set(toneContext.getFrequency());
+                    toneContext.getOscillator().start();
+                } else if(audioContext.getType() == AudioType.AM || audioContext.getType() == AudioType.FM) {
+                    ModulationContext modulationContext = (ModulationContext) audioContext;
+                    synth.add(modulationContext.getCarrierOscillator());
+                    synth.add(modulationContext.getModulatorOscillator());
+                    modulationContext.getCarrierOscillator().amplitude.set(1);
+                    modulationContext.getCarrierOscillator().frequency.set(modulationContext.getCarrierFrequency());
+                    modulationContext.getModulatorOscillator().amplitude.set(1);
+                    if(audioContext.getType() == AudioType.AM) {
+                        modulationContext.getModulatorOscillator().frequency.set(modulationContext.getModulatorFrequency() / 2.0);
+                        AmplitudeModulationContext amContext = (AmplitudeModulationContext) audioContext;
+                        amContext.getCarrierOscillator().output.connect(amContext.getModulatorOscillator().amplitude);
+                        amContext.getModulatorOscillator().output.connect(0, lineOut.input, 0);
+                        amContext.getModulatorOscillator().output.connect(0, lineOut.input, 1);
+                    } else if(audioContext.getType() == AudioType.FM) {
+                        modulationContext.getModulatorOscillator().frequency.set(modulationContext.getModulatorFrequency());
+                        FrequencyModulationContext fmContext = (FrequencyModulationContext) audioContext;
+                        fmContext.getModulatorOscillator().output.connect(fmContext.getCarrierOscillator().modulation);
+                        fmContext.getCarrierOscillator().output.connect(0, lineOut.input, 0);
+                        fmContext.getCarrierOscillator().output.connect(0, lineOut.input, 1);
+                    }
+                    modulationContext.getCarrierOscillator().start();
+                    modulationContext.getModulatorOscillator().start();
+                }
+
+                synth.start();
+                lineOut.start();
+                audioContext.setOn(true);
             }
-            modulationContext.getCarrierOscillator().start();
-            modulationContext.getModulatorOscillator().start();
-        }
-
-        synth.start();
-        lineOut.start();
-        audioContext.setOn(true);
+            return Single.just(audioContext);
+        });
     }
 
-    private void stop() {
-        clearDisposable();
-        if(audioContext.isOn()) {
-            synth.stop();
-            lineOut.stop();
-            if(audioContext.getType() == AudioType.TONE) {
-                ToneContext toneContext = (ToneContext) audioContext;
-                toneContext.getOscillator().stop();
-                toneContext.getOscillator().output.disconnectAll();
-                synth.remove(toneContext.getOscillator());
-            } else if(audioContext.getType() == AudioType.AM || audioContext.getType() == AudioType.FM) {
-                ModulationContext modulationContext = (ModulationContext) audioContext;
-                modulationContext.getModulatorOscillator().stop();
-                modulationContext.getModulatorOscillator().output.disconnectAll();
-                modulationContext.getCarrierOscillator().stop();
-                modulationContext.getCarrierOscillator().output.disconnectAll();
-                synth.remove(modulationContext.getCarrierOscillator());
-                synth.remove(modulationContext.getModulatorOscillator());
+    @Override
+    public Single<AudioContext> stop() {
+        return Single.defer(() -> {
+            clearDisposable();
+            if(audioContext.isOn()) {
+                synth.stop();
+                lineOut.stop();
+                if(audioContext.getType() == AudioType.TONE) {
+                    ToneContext toneContext = (ToneContext) audioContext;
+                    toneContext.getOscillator().stop();
+                    toneContext.getOscillator().output.disconnectAll();
+                    synth.remove(toneContext.getOscillator());
+                } else if(audioContext.getType() == AudioType.AM || audioContext.getType() == AudioType.FM) {
+                    ModulationContext modulationContext = (ModulationContext) audioContext;
+                    modulationContext.getModulatorOscillator().stop();
+                    modulationContext.getModulatorOscillator().output.disconnectAll();
+                    modulationContext.getCarrierOscillator().stop();
+                    modulationContext.getCarrierOscillator().output.disconnectAll();
+                    synth.remove(modulationContext.getCarrierOscillator());
+                    synth.remove(modulationContext.getModulatorOscillator());
+                }
+                audioContext.setOn(false);
             }
-            audioContext.setOn(false);
-        }
+            return Single.just(audioContext);
+        });
     }
 
     private void clearDisposable() {
