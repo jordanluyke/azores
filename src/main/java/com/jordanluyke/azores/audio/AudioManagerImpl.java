@@ -53,14 +53,11 @@ public class AudioManagerImpl implements AudioManager {
     @Override
     public Single<AudioContext> setTone(double frequency, ZoneId zoneId, String from, String to) {
         return stop()
-                .doOnSuccess(a -> logger.info("1 {}", a))
                 .doOnSuccess(Void -> {
                     audioContext = new ToneContext(frequency, zoneId, from, to);
                     timePeriodDisposable = Optional.of(createTimePeriodDisposable());
                 })
-                .doOnSuccess(a -> logger.info("2 {}", a))
-                .flatMap(Void -> start())
-                .doOnSuccess(a -> logger.info("3 {}", a));
+                .flatMap(Void -> start());
     }
 
     @Override
