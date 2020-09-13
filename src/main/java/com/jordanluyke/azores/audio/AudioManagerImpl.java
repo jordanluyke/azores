@@ -45,57 +45,86 @@ public class AudioManagerImpl implements AudioManager {
 
     @Override
     public Single<AudioContext> setTone(double frequency) {
-        return stop()
-                .doOnSuccess(Void -> audioContext = new ToneContext(frequency))
-                .flatMap(Void -> start());
+        return stopContext()
+                .doOnSuccess(Void -> {
+                    clearDisposable();
+                    audioContext = new ToneContext(frequency);
+                })
+                .flatMap(Void -> startContext());
     }
 
     @Override
     public Single<AudioContext> setTone(double frequency, ZoneId zoneId, String from, String to) {
-        return stop()
+        return stopContext()
                 .doOnSuccess(Void -> {
+                    clearDisposable();
                     audioContext = new ToneContext(frequency, zoneId, from, to);
                     timePeriodDisposable = Optional.of(createTimePeriodDisposable());
                 })
-                .flatMap(Void -> start());
+                .map(Void -> audioContext);
     }
 
     @Override
     public Single<AudioContext> setAM(double carrierFrequency, double modulatorFrequency) {
-        return stop()
-                .doOnSuccess(Void -> audioContext = new AmplitudeModulationContext(carrierFrequency, modulatorFrequency))
-                .flatMap(Void -> start());
+        return stopContext()
+                .doOnSuccess(Void -> {
+                    clearDisposable();
+                    audioContext = new AmplitudeModulationContext(carrierFrequency, modulatorFrequency);
+                })
+                .flatMap(Void -> startContext());
     }
 
     @Override
     public Single<AudioContext> setAM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to) {
-        return stop()
+        return stopContext()
                 .doOnSuccess(Void -> {
+                    clearDisposable();
                     audioContext = new AmplitudeModulationContext(carrierFrequency, modulatorFrequency, zoneId, from, to);
                     timePeriodDisposable = Optional.of(createTimePeriodDisposable());
                 })
-                .flatMap(Void -> start());
+                .map(Void -> audioContext);
     }
 
     @Override
     public Single<AudioContext> setFM(double carrierFrequency, double modulatorFrequency) {
-        return stop()
-                .doOnSuccess(Void -> audioContext = new FrequencyModulationContext(carrierFrequency, modulatorFrequency))
-                .flatMap(Void -> start());
+        return stopContext()
+                .doOnSuccess(Void -> {
+                    clearDisposable();
+                    audioContext = new FrequencyModulationContext(carrierFrequency, modulatorFrequency);
+                })
+                .flatMap(Void -> startContext());
     }
 
     @Override
     public Single<AudioContext> setFM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to) {
-        return stop()
+        return stopContext()
                 .doOnSuccess(Void -> {
+                    clearDisposable();
                     audioContext = new FrequencyModulationContext(carrierFrequency, modulatorFrequency, zoneId, from, to);
                     timePeriodDisposable = Optional.of(createTimePeriodDisposable());
                 })
-                .flatMap(Void -> start());
+                .map(Void -> audioContext);
     }
 
     @Override
     public Single<AudioContext> start() {
+        if(audioContext.getStopped().isPresent() && audioContext.getStopped().get())
+            audioContext.setStopped(Optional.of(false));
+        else if(audioContext.getStopped().isEmpty())
+            return startContext();
+        return Single.just(audioContext);
+    }
+
+    @Override
+    public Single<AudioContext> stop() {
+        if(audioContext.getStopped().isPresent() && !audioContext.getStopped().get())
+            audioContext.setStopped(Optional.of(true));
+        else if(audioContext.getStopped().isEmpty())
+            return stopContext();
+        return Single.just(audioContext);
+    }
+
+    private Single<AudioContext> startContext() {
         return Single.defer(() -> {
             if(!audioContext.isOn()) {
                 if(audioContext.getType() == AudioType.TONE) {
@@ -138,10 +167,8 @@ public class AudioManagerImpl implements AudioManager {
         });
     }
 
-    @Override
-    public Single<AudioContext> stop() {
+    private Single<AudioContext> stopContext() {
         return Single.defer(() -> {
-            clearDisposable();
             if(audioContext.isOn()) {
                 synth.stop();
                 lineOut.stop();
@@ -175,15 +202,15 @@ public class AudioManagerImpl implements AudioManager {
     private Disposable createTimePeriodDisposable() {
         if(audioContext.getZone().isEmpty() || audioContext.getFrom().isEmpty() || audioContext.getTo().isEmpty())
             throw new RuntimeException("zone/from/to empty");
+        audioContext.setStopped(Optional.of(false));
         return Observable.interval(0, intervalPeriod, intervalUnit)
-                .doOnNext(Void -> {
-                    if(isWithinTimePeriod(audioContext.getZone().get(), audioContext.getFrom().get(), audioContext.getTo().get())) {
-                        if(!audioContext.isOn())
-                            start();
-                    } else {
-                        if(audioContext.isOn())
-                            stop();
-                    }
+                .flatMapSingle(Void -> {
+                    if(
+                            (audioContext.getStopped().isPresent() && !audioContext.getStopped().get()) &&
+                            isWithinTimePeriod(audioContext.getZone().get(), audioContext.getFrom().get(), audioContext.getTo().get())
+                    )
+                        return startContext();
+                    return stopContext();
                 })
                 .subscribe(Void -> {}, err -> logger.error(err.getMessage()));
     }
