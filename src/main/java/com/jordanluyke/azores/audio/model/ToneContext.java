@@ -26,10 +26,10 @@ public class ToneContext extends AudioContext {
         this.frequency = frequency;
     }
 
-    public ToneContext(double frequency, ZoneId zone, String from, String to) {
+    public ToneContext(double frequency, String from, String to, ZoneId zone) {
         this.frequency = frequency;
-        this.zone = Optional.of(zone);
         this.from = Optional.of(from);
         this.to = Optional.of(to);
+        this.zone = Optional.of(zone);
     }
 }

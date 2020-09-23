@@ -1,7 +1,6 @@
 package com.jordanluyke.azores.web.api.routes;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.inject.Inject;
 import com.jordanluyke.azores.audio.AudioManager;
 import com.jordanluyke.azores.audio.model.AudioContext;
@@ -45,12 +44,11 @@ public class AudioRoutes {
 
                 JsonNode body = req.getBody().get();
                 Optional<String> type = NodeUtil.getString("type", body);
-                if(type.isEmpty())
-                    return Single.error(new FieldRequiredException("type"));
 
-                AudioType audioType;
+                AudioType audioType = AudioType.TONE;
                 try {
-                    audioType = AudioType.valueOf(type.get().toUpperCase());
+                    if(type.isPresent())
+                        audioType = AudioType.valueOf(type.get().toUpperCase());
                 } catch(IllegalArgumentException e) {
                     return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
                 }
@@ -85,7 +83,7 @@ public class AudioRoutes {
                         return Single.error(new FieldRequiredException("frequency"));
                     try {
                         if(zoneId.isPresent())
-                            return audioManager.setTone(Double.parseDouble(frequency.get()), zoneId.get(), from.get(), to.get());
+                            return audioManager.setTone(Double.parseDouble(frequency.get()), from.get(), to.get(), zoneId.get());
                         return audioManager.setTone(Double.parseDouble(frequency.get()));
                     } catch(NumberFormatException e) {
                         return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
@@ -102,11 +100,11 @@ public class AudioRoutes {
                         double modulatorFrequencyDouble = Double.parseDouble(modulatorFrequency.get());
                         if(audioType == AudioType.AM) {
                             if(zoneId.isPresent())
-                                return audioManager.setAM(carrierFrequencyDouble, modulatorFrequencyDouble, zoneId.get(), from.get(), to.get());
+                                return audioManager.setAM(carrierFrequencyDouble, modulatorFrequencyDouble, from.get(), to.get(), zoneId.get());
                             return audioManager.setAM(carrierFrequencyDouble, modulatorFrequencyDouble);
                         }
                         if(zoneId.isPresent())
-                            return audioManager.setFM(carrierFrequencyDouble, modulatorFrequencyDouble, zoneId.get(), from.get(), to.get());
+                            return audioManager.setFM(carrierFrequencyDouble, modulatorFrequencyDouble, from.get(), to.get(), zoneId.get());
                         return audioManager.setFM(carrierFrequencyDouble, modulatorFrequencyDouble);
                     } catch(NumberFormatException e) {
                         return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
@@ -122,7 +120,7 @@ public class AudioRoutes {
         @Inject protected AudioManager audioManager;
         @Override
         public Single<AudioContext> handle(Single<HttpServerRequest> o) {
-            return audioManager.start();
+            return audioManager.enable();
         }
     }
 
@@ -130,7 +128,7 @@ public class AudioRoutes {
         @Inject protected AudioManager audioManager;
         @Override
         public Single<AudioContext> handle(Single<HttpServerRequest> o) {
-            return audioManager.stop();
+            return audioManager.disable();
         }
     }
 }

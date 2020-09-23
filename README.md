@@ -8,7 +8,6 @@
 
     ```
     {
-        type: "TONE",
         frequency: 111
     }
 
@@ -25,7 +24,6 @@
     }
   
     {
-        type: "TONE",
         frequency: 111,
         zone: "America/Denver",
         from: "10:00",
@@ -33,8 +31,8 @@
     }
     ```
   
-- POST /frequency/start
-- POST /frequency/stop
+- POST /frequency/enable
+- POST /frequency/disable
 
 ### About
 

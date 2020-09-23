@@ -16,11 +16,11 @@ public interface AudioManager {
     AudioContext getAudioContext();
     DateTimeFormatter getTimeFormat();
     Single<AudioContext> setTone(double frequency);
-    Single<AudioContext> setTone(double frequency, ZoneId zoneId, String from, String to);
+    Single<AudioContext> setTone(double frequency, String from, String to, ZoneId zoneId);
     Single<AudioContext> setAM(double carrierFrequency, double modulatorFrequency);
-    Single<AudioContext> setAM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to);
+    Single<AudioContext> setAM(double carrierFrequency, double modulatorFrequency, String from, String to, ZoneId zoneId);
     Single<AudioContext> setFM(double carrierFrequency, double modulatorFrequency);
-    Single<AudioContext> setFM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to);
-    Single<AudioContext> start();
-    Single<AudioContext> stop();
+    Single<AudioContext> setFM(double carrierFrequency, double modulatorFrequency, String from, String to, ZoneId zoneId);
+    Single<AudioContext> enable();
+    Single<AudioContext> disable();
 }

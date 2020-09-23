@@ -22,12 +22,12 @@ public abstract class ModulationContext extends AudioContext {
         this.modulatorFrequency = modulatorFrequency;
     }
 
-    public ModulationContext(double carrierFrequency, double modulatorFrequency, ZoneId zone, String from, String to) {
+    public ModulationContext(double carrierFrequency, double modulatorFrequency, String from, String to, ZoneId zone) {
         this.carrierFrequency = carrierFrequency;
         this.modulatorFrequency = modulatorFrequency;
-        this.zone = Optional.of(zone);
         this.from = Optional.of(from);
         this.to = Optional.of(to);
+        this.zone = Optional.of(zone);
     }
 
     public abstract SineOscillator getCarrierOscillator();

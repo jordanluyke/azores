@@ -16,9 +16,6 @@ import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -54,14 +51,18 @@ public class AudioManagerImpl implements AudioManager {
     }
 
     @Override
-    public Single<AudioContext> setTone(double frequency, ZoneId zoneId, String from, String to) {
+    public Single<AudioContext> setTone(double frequency, String from, String to, ZoneId zoneId) {
         return stopContext()
                 .doOnSuccess(Void -> {
                     clearDisposable();
-                    audioContext = new ToneContext(frequency, zoneId, from, to);
-                    timePeriodDisposable = Optional.of(createTimePeriodDisposable());
+                    audioContext = new ToneContext(frequency, from, to, zoneId);
+                    timePeriodDisposable = Optional.of(createTimeframeDisposable());
                 })
-                .map(Void -> audioContext);
+                .flatMap(Void -> {
+                    if(audioContext.isWithinTimeframe())
+                        return startContext();
+                    return Single.just(audioContext);
+                });
     }
 
     @Override
@@ -75,14 +76,18 @@ public class AudioManagerImpl implements AudioManager {
     }
 
     @Override
-    public Single<AudioContext> setAM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to) {
+    public Single<AudioContext> setAM(double carrierFrequency, double modulatorFrequency, String from, String to, ZoneId zoneId) {
         return stopContext()
                 .doOnSuccess(Void -> {
                     clearDisposable();
-                    audioContext = new AmplitudeModulationContext(carrierFrequency, modulatorFrequency, zoneId, from, to);
-                    timePeriodDisposable = Optional.of(createTimePeriodDisposable());
+                    audioContext = new AmplitudeModulationContext(carrierFrequency, modulatorFrequency, from, to, zoneId);
+                    timePeriodDisposable = Optional.of(createTimeframeDisposable());
                 })
-                .map(Void -> audioContext);
+                .flatMap(Void -> {
+                    if(audioContext.isWithinTimeframe())
+                        return startContext();
+                    return Single.just(audioContext);
+                });
     }
 
     @Override
@@ -96,37 +101,42 @@ public class AudioManagerImpl implements AudioManager {
     }
 
     @Override
-    public Single<AudioContext> setFM(double carrierFrequency, double modulatorFrequency, ZoneId zoneId, String from, String to) {
+    public Single<AudioContext> setFM(double carrierFrequency, double modulatorFrequency, String from, String to, ZoneId zoneId) {
         return stopContext()
                 .doOnSuccess(Void -> {
                     clearDisposable();
-                    audioContext = new FrequencyModulationContext(carrierFrequency, modulatorFrequency, zoneId, from, to);
-                    timePeriodDisposable = Optional.of(createTimePeriodDisposable());
+                    audioContext = new FrequencyModulationContext(carrierFrequency, modulatorFrequency, from, to, zoneId);
+                    timePeriodDisposable = Optional.of(createTimeframeDisposable());
                 })
-                .map(Void -> audioContext);
+                .flatMap(Void -> {
+                    if(audioContext.isWithinTimeframe())
+                        return startContext();
+                    return Single.just(audioContext);
+                });
     }
 
     @Override
-    public Single<AudioContext> start() {
-        if(audioContext.getStopped().isPresent() && audioContext.getStopped().get())
-            audioContext.setStopped(Optional.of(false));
-        else if(audioContext.getStopped().isEmpty())
-            return startContext();
-        return Single.just(audioContext);
+    public Single<AudioContext> enable() {
+        return Single.defer(() -> {
+            audioContext.setEnabled(true);
+            if(!audioContext.isTimeframeSet() || (audioContext.isTimeframeSet() && audioContext.isWithinTimeframe()))
+                return startContext();
+            return Single.just(audioContext);
+        });
     }
 
     @Override
-    public Single<AudioContext> stop() {
-        if(audioContext.getStopped().isPresent() && !audioContext.getStopped().get())
-            audioContext.setStopped(Optional.of(true));
-        else if(audioContext.getStopped().isEmpty())
+    public Single<AudioContext> disable() {
+        return Single.defer(() -> {
+            audioContext.setEnabled(false);
             return stopContext();
-        return Single.just(audioContext);
+        });
     }
 
     private Single<AudioContext> startContext() {
         return Single.defer(() -> {
             if(!audioContext.isOn()) {
+                audioContext.setOn(true);
                 if(audioContext.getType() == AudioType.TONE) {
                     ToneContext toneContext = (ToneContext) audioContext;
                     synth.add(toneContext.getOscillator());
@@ -161,7 +171,6 @@ public class AudioManagerImpl implements AudioManager {
 
                 synth.start();
                 lineOut.start();
-                audioContext.setOn(true);
             }
             return Single.just(audioContext);
         });
@@ -170,6 +179,7 @@ public class AudioManagerImpl implements AudioManager {
     private Single<AudioContext> stopContext() {
         return Single.defer(() -> {
             if(audioContext.isOn()) {
+                audioContext.setOn(false);
                 synth.stop();
                 lineOut.stop();
                 if(audioContext.getType() == AudioType.TONE) {
@@ -186,7 +196,6 @@ public class AudioManagerImpl implements AudioManager {
                     synth.remove(modulationContext.getCarrierOscillator());
                     synth.remove(modulationContext.getModulatorOscillator());
                 }
-                audioContext.setOn(false);
             }
             return Single.just(audioContext);
         });
@@ -199,32 +208,18 @@ public class AudioManagerImpl implements AudioManager {
         }
     }
 
-    private Disposable createTimePeriodDisposable() {
-        if(audioContext.getZone().isEmpty() || audioContext.getFrom().isEmpty() || audioContext.getTo().isEmpty())
+    private Disposable createTimeframeDisposable() {
+        if(!audioContext.isTimeframeSet())
             throw new RuntimeException("zone/from/to empty");
-        audioContext.setStopped(Optional.of(false));
-        return Observable.interval(0, intervalPeriod, intervalUnit)
+        return Observable.interval(intervalPeriod, intervalUnit)
                 .flatMapSingle(Void -> {
-                    if(
-                            (audioContext.getStopped().isPresent() && !audioContext.getStopped().get()) &&
-                            isWithinTimePeriod(audioContext.getZone().get(), audioContext.getFrom().get(), audioContext.getTo().get())
-                    )
-                        return startContext();
-                    return stopContext();
+                    if(audioContext.isEnabled()) {
+                        if(audioContext.isWithinTimeframe())
+                            return startContext();
+                        return stopContext();
+                    }
+                    return Single.just(audioContext);
                 })
                 .subscribe(Void -> {}, err -> logger.error(err.getMessage()));
-    }
-
-    private boolean isWithinTimePeriod(ZoneId zoneId, String from, String to) {
-        LocalDateTime fromTimeToday = LocalTime.parse(from)
-                .atDate(LocalDate.now(zoneId))
-                .atZone(zoneId)
-                .toLocalDateTime();
-        LocalDateTime toTimeToday = LocalTime.parse(to)
-                .atDate(LocalDate.now(zoneId))
-                .atZone(zoneId)
-                .toLocalDateTime();
-        LocalDateTime now = LocalDateTime.now(zoneId);
-        return now.isAfter(fromTimeToday) && now.isBefore(toTimeToday);
     }
 }

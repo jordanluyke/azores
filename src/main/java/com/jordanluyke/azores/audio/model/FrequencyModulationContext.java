@@ -18,7 +18,7 @@ public class FrequencyModulationContext extends ModulationContext {
         super(carrierFrequency, modulatorFrequency);
     }
 
-    public FrequencyModulationContext(double carrierFrequency, double modulatorFrequency, ZoneId zone, String from, String to) {
-        super(carrierFrequency, modulatorFrequency, zone, from, to);
+    public FrequencyModulationContext(double carrierFrequency, double modulatorFrequency, String from, String to, ZoneId zone) {
+        super(carrierFrequency, modulatorFrequency, from, to, zone);
     }
 }

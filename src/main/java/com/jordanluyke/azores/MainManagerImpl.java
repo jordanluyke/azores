@@ -19,7 +19,7 @@ public class MainManagerImpl implements MainManager {
 
     @Override
     public Completable start() {
-        return Completable.fromSingle(audioManager.setTone(1.45, ZoneId.of("America/Denver"), "10:00", "22:00"))
+        return Completable.fromSingle(audioManager.setTone(1.45, "10:00", "22:00", ZoneId.of("America/Denver")))
                 .andThen(webManager.start());
     }
 }
