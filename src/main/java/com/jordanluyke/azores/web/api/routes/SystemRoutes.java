@@ -8,9 +8,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
+
 public class SystemRoutes {
     private static final Logger logger = LogManager.getLogger(SystemRoutes.class);
 

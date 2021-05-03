@@ -20,6 +20,7 @@ public class ErrorHandlingSingleObserver<T extends Object> implements SingleObse
 
     @Override
     public void onError(Throwable e) {
+        e.printStackTrace();
         LogManager.getLogger(loggerClass).error("Error: {}", e.getMessage());
     }
 

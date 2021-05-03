@@ -20,8 +20,6 @@ import java.util.Optional;
 @ToString
 public abstract class AudioContext {
     protected AudioType type;
-    protected boolean on = false;
-    protected boolean enabled = true;
     @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<String> from = Optional.empty();
     @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<String> to = Optional.empty();
     @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<ZoneId> zone = Optional.empty();

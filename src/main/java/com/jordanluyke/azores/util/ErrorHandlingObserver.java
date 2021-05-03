@@ -24,6 +24,7 @@ public class ErrorHandlingObserver<T extends Object> implements Observer<T> {
 
     @Override
     public void onError(Throwable e) {
+        e.printStackTrace();
         LogManager.getLogger(loggerClass).error("Error: {}", e.getMessage());
     }
 

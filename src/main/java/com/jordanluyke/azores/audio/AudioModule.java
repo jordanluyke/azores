@@ -9,6 +9,6 @@ public class AudioModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(AudioManager.class).to(AudioManagerImpl.class).asEagerSingleton();
+        bind(AudioManager.class).to(AudioManagerImpl.class);
     }
 }
