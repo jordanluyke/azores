@@ -21,13 +21,18 @@ public abstract class AudioContext {
     protected WaveType waveType;
 
     public static UnitOscillator getOscillatorFromWaveType(WaveType waveType) {
-        return switch(waveType) {
-            case SINE -> new SineOscillator();
-            case SQUARE -> new SquareOscillator();
-            case TRIANGLE -> new TriangleOscillator();
-            case SAWTOOTH -> new SawtoothOscillator();
-            default -> throw new RuntimeException("wavetype not supported");
-        };
+        switch(waveType) {
+            case SINE:
+                return new SineOscillator();
+            case SQUARE:
+                return new SquareOscillator();
+            case TRIANGLE:
+                return new TriangleOscillator();
+            case SAWTOOTH:
+                return new SawtoothOscillator();
+            default:
+                throw new RuntimeException("wavetype not supported");
+        }
     }
 //    @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<String> from = Optional.empty();
 //    @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<String> to = Optional.empty();

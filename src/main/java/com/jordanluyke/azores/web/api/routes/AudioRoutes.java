@@ -1,5 +1,6 @@
 package com.jordanluyke.azores.web.api.routes;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
 import com.jordanluyke.azores.audio.AudioManager;
 import com.jordanluyke.azores.audio.dto.FrequenciesRequest;
@@ -14,6 +15,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.Optional;
 
 public class AudioRoutes {
     private static final Logger logger = LogManager.getLogger(AudioRoutes.class);
@@ -33,10 +36,10 @@ public class AudioRoutes {
         @Override
         public Single<FrequenciesResponse> handle(Single<HttpServerRequest> o) {
             return o.flatMap(req -> {
-                var body = req.getBody();
+                Optional<JsonNode> body = req.getBody();
                 if(body.isEmpty())
                     throw new WebException(HttpResponseStatus.BAD_REQUEST, "Body missing");
-                var frequenciesRequest = NodeUtil.parseNodeInto(FrequenciesRequest.class, body.get());
+                FrequenciesRequest frequenciesRequest = NodeUtil.parseNodeInto(FrequenciesRequest.class, body.get());
                 if(frequenciesRequest.getFrequencies().isEmpty())
                     throw new FieldRequiredException("frequencies");
                 return audioManager.setFrequencies(frequenciesRequest)

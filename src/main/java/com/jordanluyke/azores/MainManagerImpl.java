@@ -14,17 +14,6 @@ public class MainManagerImpl implements MainManager {
 
     @Override
     public Completable start() {
-//        return Observable.defer(() -> {
-//            var freqencyReq1 = new FrequenciesRequest.FrequencyRequest();
-//            freqencyReq1.setTone(Optional.of(144d));
-//            var freqencyReq2 = new FrequenciesRequest.FrequencyRequest();
-//            freqencyReq2.setTone(Optional.of(145d));
-//            var frequenciesRequest = new FrequenciesRequest(List.of(freqencyReq1, freqencyReq2));
-//            return audioManager.setFrequencies(frequenciesRequest);
-//        })
-//                .toList()
-//                .flatMapCompletable(Void -> Completable.complete())
-//        }).fromSingle(audioManager.setFrequencies(new ).setTone(1.45, "10:00", "22:00", ZoneId.of("America/Denver")))
         return audioManager.init()
                 .andThen(webManager.init());
     }
