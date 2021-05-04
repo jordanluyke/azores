@@ -2,9 +2,6 @@ package com.jordanluyke.azores.web.model;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 public class FieldRequiredException extends WebException {
     public static final long serialVersionUID = 103L;
 

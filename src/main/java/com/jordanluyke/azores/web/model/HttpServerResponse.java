@@ -11,9 +11,6 @@ import lombok.Setter;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 @Getter
 @Setter
 @NoArgsConstructor

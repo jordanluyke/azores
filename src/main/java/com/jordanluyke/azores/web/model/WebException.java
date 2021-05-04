@@ -6,9 +6,6 @@ import com.jordanluyke.azores.util.RandomUtil;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import lombok.Getter;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 @Getter
 public class WebException extends Exception {
     public static final long serialVersionUID = 100L;

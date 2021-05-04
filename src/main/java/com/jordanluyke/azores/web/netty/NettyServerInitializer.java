@@ -16,9 +16,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 @AllArgsConstructor(onConstructor = @__(@Inject))
 public class NettyServerInitializer {
     private static final Logger logger = LogManager.getLogger(NettyServerInitializer.class);

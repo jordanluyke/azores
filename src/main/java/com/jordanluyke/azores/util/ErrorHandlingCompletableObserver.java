@@ -4,9 +4,6 @@ import io.reactivex.rxjava3.core.CompletableObserver;
 import io.reactivex.rxjava3.disposables.Disposable;
 import org.apache.logging.log4j.LogManager;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 public class ErrorHandlingCompletableObserver implements CompletableObserver {
     private Class<?> loggerClass;
 

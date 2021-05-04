@@ -11,9 +11,6 @@ import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 @AllArgsConstructor(onConstructor = @__(@Inject))
 public class NettyHttpChannelInitializer extends ChannelInitializer<SocketChannel> {
     private static final Logger logger = LogManager.getLogger(NettyHttpChannelInitializer.class);

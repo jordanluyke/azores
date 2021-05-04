@@ -1,38 +1,46 @@
 # Azores
 
-
 ### Usage
 
-- GET /frequency
-- POST /frequency
+- POST /frequencies
 
     ```
     {
-        frequency: 111
+        frequencies: [{
+            frequency: 111,
+            waveType: "SINE" // SQUARE, TRIANGLE, SAWTOOTH
+        }]
     }
 
     {
-        type: "AM",
-        carrierFrequency: 111,
-        modulatorFrequency: 3
+        frequencies: [{
+            type: "AM",
+            carrierFrequency: 111,
+            modulatorFrequency: 3
+        }]
     }
 
     {
-        type: "FM",
-        carrierFrequency: 111,
-        modulatorFrequency: 3
-    }
-  
-    {
-        frequency: 111,
-        zone: "America/Denver",
-        from: "10:00",
-        to: "22:00"
+        frequencies: [{
+            type: "FM",
+            carrierFrequency: 111,
+            modulatorFrequency: 3
+        }]
     }
     ```
-  
-- POST /frequency/enable
-- POST /frequency/disable
+
+- GET /frequencies
+
+    ```
+    "frequencies": [{
+        "frequencyType": "TONE",
+        "waveType": "SINE",
+        "frequency": 111.0
+    }]
+    ```  
+
+- POST /frequencies/start
+- POST /frequencies/stop
 
 ### About
 

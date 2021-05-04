@@ -6,19 +6,16 @@ import lombok.Getter;
 
 import java.time.ZoneId;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 @Getter
 public class FrequencyModulationContext extends ModulationContext {
-    @JsonIgnore private final SineOscillatorPhaseModulated carrierOscillator = new SineOscillatorPhaseModulated();
-    private final AudioType type = AudioType.FM;
+    private final FrequencyType type = FrequencyType.FM;
+    @JsonIgnore private SineOscillatorPhaseModulated carrierOscillator = new SineOscillatorPhaseModulated();
 
     public FrequencyModulationContext(double carrierFrequency, double modulatorFrequency) {
         super(carrierFrequency, modulatorFrequency);
     }
 
-    public FrequencyModulationContext(double carrierFrequency, double modulatorFrequency, String from, String to, ZoneId zone) {
-        super(carrierFrequency, modulatorFrequency, from, to, zone);
-    }
+//    public FrequencyModulationContext(double carrierFrequency, double modulatorFrequency, String from, String to, ZoneId zone) {
+//        super(carrierFrequency, modulatorFrequency, from, to, zone);
+//    }
 }

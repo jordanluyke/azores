@@ -2,9 +2,6 @@ package com.jordanluyke.azores.util;
 
 import java.util.Random;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 public class RandomUtil {
 
     private static String eligibleCharacters = "123456789ABCDEFGHJLMNPQRTUVWXYZ";

@@ -7,9 +7,6 @@ import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 @AllArgsConstructor(onConstructor = @__(@Inject))
 public class WebManagerImpl implements WebManager {
     private static final Logger logger = LogManager.getLogger(WebManager.class);
@@ -17,7 +14,7 @@ public class WebManagerImpl implements WebManager {
     private NettyServerInitializer nettyServerInitializer;
 
     @Override
-    public Completable start() {
+    public Completable init() {
         return nettyServerInitializer.init();
     }
 }

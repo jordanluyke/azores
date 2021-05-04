@@ -17,9 +17,6 @@ import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 @AllArgsConstructor(onConstructor = @__(@Inject))
 public class ApiManagerImpl implements ApiManager {
     private static final Logger logger = LogManager.getLogger(ApiManager.class);

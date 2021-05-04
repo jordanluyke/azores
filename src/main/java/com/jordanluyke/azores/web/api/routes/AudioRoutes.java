@@ -5,7 +5,6 @@ import com.jordanluyke.azores.audio.AudioManager;
 import com.jordanluyke.azores.audio.dto.FrequenciesRequest;
 import com.jordanluyke.azores.audio.dto.FrequenciesResponse;
 import com.jordanluyke.azores.audio.model.AudioContext;
-import com.jordanluyke.azores.audio.model.AudioType;
 import com.jordanluyke.azores.util.NodeUtil;
 import com.jordanluyke.azores.web.api.model.HttpRouteHandler;
 import com.jordanluyke.azores.web.model.FieldRequiredException;
@@ -16,12 +15,6 @@ import io.reactivex.rxjava3.core.Single;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.time.DateTimeException;
-import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
-import java.util.List;
-import java.util.Optional;
-
 public class AudioRoutes {
     private static final Logger logger = LogManager.getLogger(AudioRoutes.class);
 
@@ -31,7 +24,7 @@ public class AudioRoutes {
         public Single<FrequenciesResponse> handle(Single<HttpServerRequest> o) {
             return audioManager.getFrequencies()
                     .toList()
-                    .map(audioContexts -> new FrequenciesResponse(audioContexts, audioManager.isEnabled()));
+                    .map(audioContexts -> new FrequenciesResponse(audioContexts, audioManager.isActive()));
         }
     }
 
@@ -44,9 +37,11 @@ public class AudioRoutes {
                 if(body.isEmpty())
                     throw new WebException(HttpResponseStatus.BAD_REQUEST, "Body missing");
                 var frequenciesRequest = NodeUtil.parseNodeInto(FrequenciesRequest.class, body.get());
+                if(frequenciesRequest.getFrequencies().isEmpty())
+                    throw new FieldRequiredException("frequencies");
                 return audioManager.setFrequencies(frequenciesRequest)
                         .toList()
-                        .map(audioContexts -> new FrequenciesResponse(audioContexts, audioManager.isEnabled()));
+                        .map(audioContexts -> new FrequenciesResponse(audioContexts, audioManager.isActive()));
             });
         }
     }
@@ -122,19 +117,21 @@ public class AudioRoutes {
 //                return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
 //            });
 
-//    public static class EnableFrequencies implements HttpRouteHandler {
-//        @Inject protected AudioManager audioManager;
-//        @Override
-//        public Single<AudioContext> handle(Single<HttpServerRequest> o) {
-//            return audioManager.enable();
-//        }
-//    }
-//
-//    public static class DisableFrequencies implements HttpRouteHandler {
-//        @Inject protected AudioManager audioManager;
-//        @Override
-//        public Single<AudioContext> handle(Single<HttpServerRequest> o) {
-//            return audioManager.disable();
-//        }
-//    }
+    public static class StartFrequencies implements HttpRouteHandler {
+        @Inject protected AudioManager audioManager;
+        @Override
+        public Single<FrequenciesResponse> handle(Single<HttpServerRequest> o) {
+            return audioManager.startFrequencies()
+                    .map(audioContexts -> new FrequenciesResponse(audioContexts, audioManager.isActive()));
+        }
+    }
+
+    public static class StopFrequencies implements HttpRouteHandler {
+        @Inject protected AudioManager audioManager;
+        @Override
+        public Single<FrequenciesResponse> handle(Single<HttpServerRequest> o) {
+            return audioManager.stopFrequencies()
+                    .map(audioContexts -> new FrequenciesResponse(audioContexts, audioManager.isActive()));
+        }
+    }
 }

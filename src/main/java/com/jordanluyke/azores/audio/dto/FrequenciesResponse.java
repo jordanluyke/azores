@@ -5,9 +5,7 @@ import lombok.*;
 
 import java.util.List;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -15,5 +13,5 @@ import java.util.List;
 @ToString
 public class FrequenciesResponse {
     private List<? extends AudioContext> frequencies;
-    private boolean enabled;
+    private boolean isActive;
 }

@@ -2,9 +2,6 @@ package com.jordanluyke.azores.audio;
 
 import com.google.inject.AbstractModule;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 public class AudioModule extends AbstractModule {
 
     @Override

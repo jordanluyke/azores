@@ -23,9 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 public class NettyHttpChannelInboundHandler extends SimpleChannelInboundHandler<HttpObject> {
     private static final Logger logger = LogManager.getLogger(NettyHttpChannelInboundHandler.class);
 

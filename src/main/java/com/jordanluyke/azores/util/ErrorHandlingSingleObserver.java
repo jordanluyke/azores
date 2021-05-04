@@ -4,9 +4,6 @@ import io.reactivex.rxjava3.core.SingleObserver;
 import io.reactivex.rxjava3.disposables.Disposable;
 import org.apache.logging.log4j.LogManager;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 public class ErrorHandlingSingleObserver<T extends Object> implements SingleObserver<T> {
     private Class<?> loggerClass;
 

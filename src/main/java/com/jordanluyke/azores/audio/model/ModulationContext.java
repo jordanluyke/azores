@@ -2,6 +2,7 @@ package com.jordanluyke.azores.audio.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jsyn.unitgen.SineOscillator;
+import com.jsyn.unitgen.UnitOscillator;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -13,7 +14,7 @@ import java.util.Optional;
 @Setter
 @ToString
 public abstract class ModulationContext extends AudioContext {
-    @JsonIgnore private final SineOscillator modulatorOscillator = new SineOscillator();
+    @JsonIgnore private final UnitOscillator modulatorOscillator = new SineOscillator();
     private double carrierFrequency;
     private double modulatorFrequency;
 
@@ -22,14 +23,13 @@ public abstract class ModulationContext extends AudioContext {
         this.modulatorFrequency = modulatorFrequency;
     }
 
-    public ModulationContext(double carrierFrequency, double modulatorFrequency, String from, String to, ZoneId zone) {
-        this.carrierFrequency = carrierFrequency;
-        this.modulatorFrequency = modulatorFrequency;
-        this.from = Optional.of(from);
-        this.to = Optional.of(to);
-        this.zone = Optional.of(zone);
-    }
+//    public ModulationContext(double carrierFrequency, double modulatorFrequency, String from, String to, ZoneId zone) {
+//        this.carrierFrequency = carrierFrequency;
+//        this.modulatorFrequency = modulatorFrequency;
+//        this.from = Optional.of(from);
+//        this.to = Optional.of(to);
+//        this.zone = Optional.of(zone);
+//    }
 
-    public abstract SineOscillator getCarrierOscillator();
-    public abstract AudioType getType();
+    public abstract UnitOscillator getCarrierOscillator();
 }

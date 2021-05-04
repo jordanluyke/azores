@@ -2,48 +2,47 @@ package com.jordanluyke.azores.audio;
 
 import com.jordanluyke.azores.audio.dto.FrequenciesRequest;
 import com.jordanluyke.azores.audio.model.AudioContext;
-import com.jordanluyke.azores.audio.model.AudioType;
+import com.jordanluyke.azores.audio.model.FrequencyType;
 import com.jordanluyke.azores.audio.model.AmplitudeModulationContext;
 import com.jordanluyke.azores.audio.model.FrequencyModulationContext;
 import com.jordanluyke.azores.audio.model.ModulationContext;
 import com.jordanluyke.azores.audio.model.ToneContext;
+import com.jordanluyke.azores.web.model.FieldRequiredException;
+import com.jordanluyke.azores.web.model.WebException;
 import com.jsyn.JSyn;
 import com.jsyn.Synthesizer;
 import com.jsyn.unitgen.LineOut;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.disposables.Disposable;
-import lombok.Getter;
-import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.inject.Singleton;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 @Singleton
 public class AudioManagerImpl implements AudioManager {
     private static final Logger logger = LogManager.getLogger(AudioManager.class);
     private static final Synthesizer synth = JSyn.createSynthesizer();
     private static final LineOut lineOut = new LineOut();
-    private static final int intervalPeriod = 1;
-    private static final TimeUnit intervalUnit = TimeUnit.SECONDS;
+//    private static final int intervalPeriod = 1;
+//    private static final TimeUnit intervalUnit = TimeUnit.SECONDS;
 
-    private Optional<Disposable> timePeriodDisposable = Optional.empty();
+//    private Optional<Disposable> timePeriodDisposable = Optional.empty();
     private List<AudioContext> audioContexts = new ArrayList<>();
     private boolean isActive = false;
-    private boolean isEnabled = true;
+//    private boolean isEnabled = true;
 
-    public AudioManagerImpl() {
-        synth.add(lineOut);
+    @Override
+    public Completable init() {
+        return Completable.defer(() -> {
+            synth.add(lineOut);
+            return Completable.complete();
+        });
     }
 
     @Override
@@ -53,36 +52,45 @@ public class AudioManagerImpl implements AudioManager {
 
     @Override
     public Observable<? extends AudioContext> setFrequencies(FrequenciesRequest request) {
-        return stop()
+        return stopFrequencies()
                 .flatMapObservable(Void -> Observable.fromIterable(request.getFrequencies()))
                 .map(frequencyRequest -> {
-                    if(frequencyRequest.getAudioType() == AudioType.TONE) {
-                        if(frequencyRequest.getTone().isEmpty())
-                            throw new RuntimeException("Tone empty");
-                        return new ToneContext(frequencyRequest.getTone().get());
+                    if(frequencyRequest.getFrequencyType() == FrequencyType.TONE) {
+                        if(frequencyRequest.getFrequency().isEmpty())
+                            throw new FieldRequiredException("frequency");
+                        if(frequencyRequest.getWaveType().isEmpty())
+                            throw new FieldRequiredException("waveType");
+                        return new ToneContext(frequencyRequest.getFrequency().get(), frequencyRequest.getWaveType().get());
                     }
-                    if(frequencyRequest.getAudioType() == AudioType.AM || frequencyRequest.getAudioType() == AudioType.FM) {
-                        if(frequencyRequest.getCarrierFrequency().isEmpty() || frequencyRequest.getModulatorFrequency().isEmpty())
-                            throw new RuntimeException("Carrier/modulator frequency empty");
-                        if(frequencyRequest.getAudioType() == AudioType.AM)
+                    if(frequencyRequest.getFrequencyType() == FrequencyType.AM || frequencyRequest.getFrequencyType() == FrequencyType.FM) {
+                        if(frequencyRequest.getCarrierFrequency().isEmpty())
+                            throw new FieldRequiredException("carrierFrequency");
+                        if(frequencyRequest.getModulatorFrequency().isEmpty())
+                            throw new FieldRequiredException("modulatorFrequency");
+                        if(frequencyRequest.getFrequencyType() == FrequencyType.AM)
                             return new AmplitudeModulationContext(frequencyRequest.getCarrierFrequency().get(), frequencyRequest.getModulatorFrequency().get());
                         return new FrequencyModulationContext(frequencyRequest.getCarrierFrequency().get(), frequencyRequest.getModulatorFrequency().get());
                     }
-                    throw new RuntimeException("Audio type not supported");
+                    throw new WebException(HttpResponseStatus.BAD_REQUEST, "frequencyType must be one of: TONE/AM/FM");
                 })
                 .toList()
                 .doOnSuccess(contexts -> {
                     isActive = false;
                     audioContexts = contexts;
                 })
-                .flatMap(contexts -> start())
+                .flatMap(contexts -> startFrequencies())
                 .flatMapObservable(Observable::fromIterable);
     }
 
     @Override
-    public boolean isEnabled() {
-        return isEnabled;
+    public boolean isActive() {
+        return isActive;
     }
+
+//    @Override
+//    public boolean isEnabled() {
+//        return isEnabled;
+//    }
 
     //    @Override
 //    public Single<AudioContext> setTone(double frequency) {
@@ -177,11 +185,11 @@ public class AudioManagerImpl implements AudioManager {
 //        });
 //    }
 
-    private Single<List<AudioContext>> start() {
+    public Single<List<AudioContext>> startFrequencies() {
         return Observable.fromIterable(audioContexts)
                 .doOnNext(audioContext -> {
                     if(!isActive) {
-                        if(audioContext.getType() == AudioType.TONE) {
+                        if(audioContext.getFrequencyType() == FrequencyType.TONE) {
                             ToneContext toneContext = (ToneContext) audioContext;
                             synth.add(toneContext.getOscillator());
                             toneContext.getOscillator().output.connect(0, lineOut.input, 0);
@@ -189,20 +197,20 @@ public class AudioManagerImpl implements AudioManager {
                             toneContext.getOscillator().amplitude.set(1);
                             toneContext.getOscillator().frequency.set(toneContext.getFrequency());
                             toneContext.getOscillator().start();
-                        } else if(audioContext.getType() == AudioType.AM || audioContext.getType() == AudioType.FM) {
+                        } else if(audioContext.getFrequencyType() == FrequencyType.AM || audioContext.getFrequencyType() == FrequencyType.FM) {
                             ModulationContext modulationContext = (ModulationContext) audioContext;
                             synth.add(modulationContext.getCarrierOscillator());
                             synth.add(modulationContext.getModulatorOscillator());
                             modulationContext.getCarrierOscillator().amplitude.set(1);
                             modulationContext.getCarrierOscillator().frequency.set(modulationContext.getCarrierFrequency());
                             modulationContext.getModulatorOscillator().amplitude.set(1);
-                            if(audioContext.getType() == AudioType.AM) {
+                            if(audioContext.getFrequencyType() == FrequencyType.AM) {
                                 modulationContext.getModulatorOscillator().frequency.set(modulationContext.getModulatorFrequency() / 2.0);
                                 AmplitudeModulationContext amContext = (AmplitudeModulationContext) audioContext;
                                 amContext.getCarrierOscillator().output.connect(amContext.getModulatorOscillator().amplitude);
                                 amContext.getModulatorOscillator().output.connect(0, lineOut.input, 0);
                                 amContext.getModulatorOscillator().output.connect(0, lineOut.input, 1);
-                            } else if(audioContext.getType() == AudioType.FM) {
+                            } else if(audioContext.getFrequencyType() == FrequencyType.FM) {
                                 modulationContext.getModulatorOscillator().frequency.set(modulationContext.getModulatorFrequency());
                                 FrequencyModulationContext fmContext = (FrequencyModulationContext) audioContext;
                                 fmContext.getModulatorOscillator().output.connect(fmContext.getCarrierOscillator().modulation);
@@ -212,27 +220,35 @@ public class AudioManagerImpl implements AudioManager {
                             modulationContext.getCarrierOscillator().start();
                             modulationContext.getModulatorOscillator().start();
                         }
-
-                        synth.start();
-                        lineOut.start();
                     }
                 })
                 .toList()
-                .doOnSuccess(Void -> isActive = true);
+                .doOnSuccess(contexts -> {
+                    if(!contexts.isEmpty() && !isActive) {
+                        synth.start();
+                        lineOut.start();
+                        isActive = true;
+                    }
+                });
     }
 
-    private Single<List<AudioContext>> stop() {
-        return Observable.fromIterable(audioContexts)
+    public Single<List<AudioContext>> stopFrequencies() {
+        return Observable.defer(() -> {
+            if(isActive) {
+                synth.stop();
+                lineOut.stop();
+                isActive = false;
+            }
+            return Observable.fromIterable(audioContexts);
+        })
                 .doOnNext(audioContext -> {
                     if(isActive) {
-                        synth.stop();
-                        lineOut.stop();
-                        if(audioContext.getType() == AudioType.TONE) {
+                        if(audioContext.getFrequencyType() == FrequencyType.TONE) {
                             ToneContext toneContext = (ToneContext) audioContext;
                             toneContext.getOscillator().stop();
                             toneContext.getOscillator().output.disconnectAll();
                             synth.remove(toneContext.getOscillator());
-                        } else if(audioContext.getType() == AudioType.AM || audioContext.getType() == AudioType.FM) {
+                        } else if(audioContext.getFrequencyType() == FrequencyType.AM || audioContext.getFrequencyType() == FrequencyType.FM) {
                             ModulationContext modulationContext = (ModulationContext) audioContext;
                             modulationContext.getModulatorOscillator().stop();
                             modulationContext.getModulatorOscillator().output.disconnectAll();
@@ -243,8 +259,7 @@ public class AudioManagerImpl implements AudioManager {
                         }
                     }
                 })
-                .toList()
-                .doOnSuccess(Void -> isActive = false);
+                .toList();
     }
 
 //    private void clearDisposable() {

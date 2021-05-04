@@ -9,9 +9,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Jordan Luyke <jordanluyke@gmail.com>
- */
 public class ApiV1 implements Api {
 
     @Override
@@ -19,9 +16,9 @@ public class ApiV1 implements Api {
         return Arrays.asList(
                 new HttpRoute("/status", HttpMethod.GET, SystemRoutes.GetStatus.class),
                 new HttpRoute("/frequencies", HttpMethod.GET, AudioRoutes.GetFrequencies.class),
-                new HttpRoute("/frequencies", HttpMethod.POST, AudioRoutes.SetFrequencies.class)
-//                new HttpRoute("/frequencies/enable", HttpMethod.POST, AudioRoutes.EnableFrequencies.class),
-//                new HttpRoute("/frequencies/disable", HttpMethod.POST, AudioRoutes.DisableFrequencies.class)
+                new HttpRoute("/frequencies", HttpMethod.POST, AudioRoutes.SetFrequencies.class),
+                new HttpRoute("/frequencies/start", HttpMethod.POST, AudioRoutes.StartFrequencies.class),
+                new HttpRoute("/frequencies/stop", HttpMethod.POST, AudioRoutes.StopFrequencies.class)
         );
     }
 }
