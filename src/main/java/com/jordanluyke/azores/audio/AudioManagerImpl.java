@@ -237,7 +237,6 @@ public class AudioManagerImpl implements AudioManager {
             if(isActive) {
                 synth.stop();
                 lineOut.stop();
-                isActive = false;
             }
             return Observable.fromIterable(audioContexts);
         })
@@ -259,7 +258,11 @@ public class AudioManagerImpl implements AudioManager {
                         }
                     }
                 })
-                .toList();
+                .toList()
+                .doOnSuccess(contexts -> {
+                    if(isActive)
+                        isActive = false;
+                });
     }
 
 //    private void clearDisposable() {
