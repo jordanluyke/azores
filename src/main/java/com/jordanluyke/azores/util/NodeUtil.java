@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jordanluyke.azores.web.model.FieldRequiredException;
@@ -14,6 +15,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,11 +56,11 @@ public class NodeUtil {
         }
     }
 
-    public static <T> T parseNodeInto(Class<T> clazz, JsonNode body) throws FieldRequiredException {
+    public static <T> T parseNodeInto(Class<T> clazz, JsonNode body) throws FieldRequiredException, JsonProcessingException {
         return parseNodeInto(clazz, body, mapper);
     }
 
-    public static <T> T parseNodeInto(Class<T> clazz, JsonNode body, ObjectMapper mapper) throws FieldRequiredException {
+    public static <T> T parseNodeInto(Class<T> clazz, JsonNode body, ObjectMapper mapper) throws FieldRequiredException, JsonProcessingException {
         try {
             return mapper.treeToValue(body, clazz);
         } catch(IllegalArgumentException | JsonProcessingException e) {
@@ -68,6 +71,8 @@ public class NodeUtil {
                 if(body.get(name) == null)
                     throw new FieldRequiredException(name);
             }
+            if(e instanceof JsonProcessingException)
+                throw e;
             throw new RuntimeException(e.getMessage());
         }
     }

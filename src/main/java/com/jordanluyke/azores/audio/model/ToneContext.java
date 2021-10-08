@@ -6,7 +6,7 @@ import lombok.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.lang.reflect.InvocationTargetException;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Optional;
 
@@ -26,10 +26,12 @@ public class ToneContext extends AudioContext {
         this.oscillator = AudioContext.getOscillatorFromWaveType(waveType);
     }
 
-//    public ToneContext(double frequency, String from, String to, ZoneId zone) {
-//        this.frequency = frequency;
-//        this.from = Optional.of(from);
-//        this.to = Optional.of(to);
-//        this.zone = Optional.of(zone);
-//    }
+    public ToneContext(double frequency, WaveType waveType, Optional<LocalTime> from, Optional<LocalTime> to, Optional<ZoneId> zoneId) {
+        this.frequency = frequency;
+        this.waveType = waveType;
+        this.oscillator = AudioContext.getOscillatorFromWaveType(waveType);
+        this.from = from;
+        this.to = to;
+        this.zoneId = zoneId;
+    }
 }

@@ -13,5 +13,5 @@ import java.util.List;
 @ToString
 public class FrequenciesResponse {
     private List<? extends AudioContext> frequencies;
-    private boolean isActive;
+    private boolean isEnabled;
 }

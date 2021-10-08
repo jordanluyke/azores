@@ -25,12 +25,12 @@ public class FrequenciesRequest {
     @ToString
     public static class FrequencyRequest {
         private FrequencyType frequencyType = FrequencyType.TONE;
-        private Optional<WaveType> waveType = Optional.empty();
+        private WaveType waveType = WaveType.SINE;
         private Optional<Double> frequency = Optional.empty();
         private Optional<Double> carrierFrequency = Optional.empty();
         private Optional<Double> modulatorFrequency = Optional.empty();
         private Optional<ZoneId> zoneId = Optional.empty();
-        @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="HH:mm") private Optional<LocalTime> from = Optional.empty();
-        @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="HH:mm") private Optional<LocalTime> to = Optional.empty();
+        @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="HH:mm:ss") private Optional<LocalTime> from = Optional.empty();
+        @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="HH:mm:ss") private Optional<LocalTime> to = Optional.empty();
     }
 }

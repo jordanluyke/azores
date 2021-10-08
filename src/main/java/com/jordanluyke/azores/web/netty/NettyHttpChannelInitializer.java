@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import com.jordanluyke.azores.Config;
 import com.jordanluyke.azores.web.api.ApiManager;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.*;
 import lombok.AllArgsConstructor;
@@ -20,10 +19,11 @@ public class NettyHttpChannelInitializer extends ChannelInitializer<SocketChanne
 
     @Override
     protected void initChannel(SocketChannel channel) {
-        ChannelPipeline pipeline = channel.pipeline();
-//        pipeline.addLast(new JdkZlibEncoder());
-//        pipeline.addLast(new JdkZlibDecoder());
-        pipeline.addLast(new HttpServerCodec())
+        channel.pipeline()
+                .addLast(config.getSslCtx().newHandler(channel.alloc()))
+//                .addLast(new JdkZlibEncoder());
+//                .addLast(new JdkZlibDecoder());
+                .addLast(new HttpServerCodec())
                 .addLast(new HttpContentCompressor())
                 .addLast(new NettyHttpChannelInboundHandler(apiManager));
     }

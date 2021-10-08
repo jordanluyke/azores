@@ -5,18 +5,20 @@ import com.jsyn.unitgen.SineOscillator;
 import com.jsyn.unitgen.UnitOscillator;
 import lombok.Getter;
 
+import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.Optional;
 
 @Getter
 public class AmplitudeModulationContext extends ModulationContext {
-    private final FrequencyType type = FrequencyType.AM;
+    private final FrequencyType frequencyType = FrequencyType.AM;
     @JsonIgnore private UnitOscillator carrierOscillator = new SineOscillator();
 
     public AmplitudeModulationContext(double carrierFrequency, double modulatorFrequency) {
         super(carrierFrequency, modulatorFrequency);
     }
 
-//    public AmplitudeModulationContext(double carrierFrequency, double modulatorFrequency, String from, String to, ZoneId zoneId) {
-//        super(carrierFrequency, modulatorFrequency, from, to, zoneId);
-//    }
+    public AmplitudeModulationContext(double carrierFrequency, double modulatorFrequency, Optional<LocalTime> from, Optional<LocalTime> to, Optional<ZoneId> zoneId) {
+        super(carrierFrequency, modulatorFrequency, from, to, zoneId);
+    }
 }

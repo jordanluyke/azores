@@ -14,12 +14,12 @@ public class SystemRoutes {
 
     public static class GetStatus implements HttpRouteHandler {
         @Override
-        public Single<ObjectNode> handle(Single<HttpServerRequest> o) {
-            return o.map(req -> {
+        public Single<ObjectNode> handle(HttpServerRequest req) {
+            return Single.defer(() -> {
                 ObjectNode body = new ObjectMapper().createObjectNode();
                 body.put("time", System.currentTimeMillis());
                 body.put("status", "OK");
-                return body;
+                return Single.just(body);
             });
         }
     }

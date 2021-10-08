@@ -7,14 +7,21 @@
     ```
     {
         frequencies: [{
+            frequency: 111
+        }]
+    }
+
+    {
+        frequencies: [{
             frequency: 111,
+            frequencyType: "TONE" // AM, FM
             waveType: "SINE" // SQUARE, TRIANGLE, SAWTOOTH
         }]
     }
 
     {
         frequencies: [{
-            type: "AM",
+            frequencyType: "AM",
             carrierFrequency: 111,
             modulatorFrequency: 3
         }]
@@ -22,21 +29,45 @@
 
     {
         frequencies: [{
-            type: "FM",
+            frequencyType: "FM",
             carrierFrequency: 111,
             modulatorFrequency: 3
         }]
+    }
+
+    {
+        "frequencies": [
+            {
+                "frequency": 528,
+                "zoneId": "America/Denver",
+                "from": "22:00:00",
+                "to": "02:00:00"
+            },
+            {
+                "frequency": 111
+            },
+            {
+                "frequency": 741
+                "zoneId": "America/Denver",
+                "from": "06:00:00",
+                "to": "09:00:00"
+            }
+        ]
     }
     ```
 
 - GET /frequencies
 
     ```
-    "frequencies": [{
-        "frequencyType": "TONE",
-        "waveType": "SINE",
-        "frequency": 111.0
-    }]
+    {
+        "frequencies": [{
+            "frequencyType": "TONE",
+            "waveType": "SINE",
+            "frequency": 111.0,
+            "active": true
+        }],
+        "enabled": true
+    }
     ```  
 
 - POST /frequencies/start
@@ -44,7 +75,7 @@
 
 ### About
 
-Starts a specified tone, AM frequency, or FM frequency.
+Starts specified tone, AM frequency, or FM frequency.
 
 ### Resonance
 

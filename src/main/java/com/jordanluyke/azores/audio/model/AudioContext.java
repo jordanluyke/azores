@@ -19,6 +19,10 @@ import java.util.Optional;
 public abstract class AudioContext {
     protected FrequencyType frequencyType;
     protected WaveType waveType;
+    protected boolean isActive = false;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<LocalTime> from = Optional.empty();
+    @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<LocalTime> to = Optional.empty();
+    @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<ZoneId> zoneId = Optional.empty();
 
     public static UnitOscillator getOscillatorFromWaveType(WaveType waveType) {
         switch(waveType) {
@@ -34,28 +38,27 @@ public abstract class AudioContext {
                 throw new RuntimeException("wavetype not supported");
         }
     }
-//    @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<String> from = Optional.empty();
-//    @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<String> to = Optional.empty();
-//    @JsonInclude(JsonInclude.Include.NON_EMPTY) protected Optional<ZoneId> zone = Optional.empty();
-//
-//    @JsonIgnore
-//    public boolean isTimeframeSet() {
-//        return from.isPresent() && to.isPresent() && zone.isPresent();
-//    }
-//
-//    @JsonIgnore
-//    public boolean isWithinTimeframe() {
-//        if(!isTimeframeSet())
-//            throw new RuntimeException("Timeframe not set");
-//        LocalDateTime fromTimeToday = LocalTime.parse(from.get())
-//                .atDate(LocalDate.now(zone.get()))
-//                .atZone(zone.get())
-//                .toLocalDateTime();
-//        LocalDateTime toTimeToday = LocalTime.parse(to.get())
-//                .atDate(LocalDate.now(zone.get()))
-//                .atZone(zone.get())
-//                .toLocalDateTime();
-//        LocalDateTime now = LocalDateTime.now(zone.get());
-//        return now.isAfter(fromTimeToday) && now.isBefore(toTimeToday);
-//    }
+
+    @JsonIgnore
+    public boolean isTimeframeSet() {
+        return from.isPresent() && to.isPresent() && zoneId.isPresent();
+    }
+
+    @JsonIgnore
+    public boolean isWithinTimeframe() {
+        if(!isTimeframeSet())
+            throw new RuntimeException("Timeframe not set");
+        LocalDateTime fromTimeToday = from.get()
+                .atDate(LocalDate.now(zoneId.get()))
+                .atZone(zoneId.get())
+                .toLocalDateTime();
+        LocalDateTime toTimeToday = to.get()
+                .atDate(LocalDate.now(zoneId.get()))
+                .atZone(zoneId.get())
+                .toLocalDateTime();
+        LocalDateTime now = LocalDateTime.now(zoneId.get());
+        if(from.get().isAfter(to.get()))
+            return now.isAfter(fromTimeToday) || now.isBefore(toTimeToday);
+        return now.isAfter(fromTimeToday) && now.isBefore(toTimeToday);
+    }
 }

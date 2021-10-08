@@ -14,5 +14,5 @@ public interface AudioManager {
     Observable<? extends AudioContext> setFrequencies(FrequenciesRequest request);
     Single<List<AudioContext>> startFrequencies();
     Single<List<AudioContext>> stopFrequencies();
-    boolean isActive();
+    boolean isEnabled();
 }

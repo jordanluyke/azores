@@ -1,26 +1,21 @@
 package com.jordanluyke.azores.web.netty;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.jordanluyke.azores.util.ErrorHandlingSingleObserver;
 import com.jordanluyke.azores.util.NodeUtil;
 import com.jordanluyke.azores.web.api.ApiManager;
 import com.jordanluyke.azores.web.model.HttpServerRequest;
 import com.jordanluyke.azores.web.model.HttpServerResponse;
-import com.jordanluyke.azores.web.model.WebException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
-import io.netty.util.CharsetUtil;
-import io.reactivex.rxjava3.core.Single;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.net.ssl.SSLException;
+import java.net.SocketException;
 import java.net.URI;
-import java.net.URLDecoder;
-import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class NettyHttpChannelInboundHandler extends SimpleChannelInboundHandler<HttpObject> {
@@ -28,8 +23,8 @@ public class NettyHttpChannelInboundHandler extends SimpleChannelInboundHandler<
 
     private ApiManager apiManager;
 
-    private ByteBuf reqBuf = Unpooled.buffer();
-    private HttpServerRequest httpServerRequest = new HttpServerRequest();
+    private ByteBuf content = Unpooled.buffer();
+    private HttpServerRequest req = new HttpServerRequest();
 
     public NettyHttpChannelInboundHandler(ApiManager apiManager) {
         this.apiManager = apiManager;
@@ -39,26 +34,31 @@ public class NettyHttpChannelInboundHandler extends SimpleChannelInboundHandler<
     public void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
         if(msg instanceof HttpRequest) {
             HttpRequest httpRequest = (HttpRequest) msg;
-            URI uri = new URI(httpRequest.uri());
+            URI uri = new URI(httpRequest.uri().replace("\\", ""));
 
-            httpServerRequest.setPath(uri.getRawPath());
-            httpServerRequest.setMethod(httpRequest.method());
-            httpServerRequest.setHeaders(httpRequest.headers()
+            req.setPath(uri.getRawPath());
+            req.setMethod(httpRequest.method());
+            req.setHeaders(httpRequest.headers()
                     .entries()
                     .stream()
                     .collect(Collectors.toMap(key -> key.getKey().toLowerCase(), Map.Entry::getValue)));
-            httpServerRequest.setQueryParams(new QueryStringDecoder(httpRequest.uri())
+            req.setQueryParams(new QueryStringDecoder(uri)
                     .parameters()
                     .entrySet()
                     .stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().get(0))));
-            httpServerRequest.setCtx(ctx);
         } else if(msg instanceof HttpContent) {
             HttpContent httpContent = (HttpContent) msg;
-            reqBuf = Unpooled.copiedBuffer(reqBuf, httpContent.content());
+            content = Unpooled.copiedBuffer(content, httpContent.content());
             if(msg instanceof LastHttpContent) {
-                handleRequest()
-                        .doOnSuccess(res -> writeResponse(ctx, res))
+                req.setContent(content.array());
+                content.release();
+                logger.debug("HttpRequest: {} {} {}", ctx.channel().remoteAddress(), req.getMethod(), req.getPath());
+                apiManager.handleRequest(req)
+                        .doOnSuccess(res -> {
+                            logger.debug("HttpResponse: {} {} {} {} {}", ctx.channel().remoteAddress(), req.getMethod(), req.getPath(), res.getStatus().code(), res.getBody());
+                            writeResponse(ctx, res);
+                        })
                         .subscribe(new ErrorHandlingSingleObserver<>());
             }
         }
@@ -73,37 +73,12 @@ public class NettyHttpChannelInboundHandler extends SimpleChannelInboundHandler<
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        logger.error("Exception caught on {} {}", ctx.channel().remoteAddress(), cause.getMessage());
-        cause.printStackTrace();
+        if(!(cause instanceof SocketException) && !(cause.getCause() instanceof SSLException)) {
+            var causeClass = cause.getCause() == null ? cause.getClass() : cause.getCause().getClass();
+            logger.error("Exception caught on {} {}: {}", ctx.channel().remoteAddress(), causeClass.getSimpleName(), cause.getMessage());
+//            cause.printStackTrace();
+        }
         ctx.close();
-    }
-
-    private Single<HttpServerResponse> handleRequest() {
-        return Single.defer(() -> {
-//            if(httpContent.decoderResult().isFailure())
-//                return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST));
-            if(reqBuf.readableBytes() > 0) {
-                try {
-                    Optional<JsonNode> body = Optional.empty();
-                    if(httpServerRequest.getHeaders().get(HttpHeaderNames.CONTENT_TYPE.toString()).equalsIgnoreCase(HttpHeaderValues.APPLICATION_JSON.toString())) {
-                        body = Optional.of(NodeUtil.getJsonNode(reqBuf.array()));
-                    } else if(httpServerRequest.getHeaders().get(HttpHeaderNames.CONTENT_TYPE.toString()).equalsIgnoreCase(HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.toString())) {
-                        String form = URLDecoder.decode(new String(reqBuf.array(), CharsetUtil.UTF_8), "UTF-8");
-                        Map<String, String> params = Arrays.stream(form.split("&"))
-                                .map(entry -> Arrays.asList(entry.split("=")))
-                                .collect(Collectors.toMap(pair -> pair.get(0), pair -> pair.get(1)));
-                        body = Optional.of(NodeUtil.mapper.valueToTree(params));
-                    }
-                    httpServerRequest.setBody(body);
-                } catch(RuntimeException e) {
-                    return Single.error(new WebException(HttpResponseStatus.BAD_REQUEST, "Unable to parse JSON"));
-                } finally {
-                    reqBuf.release();
-                }
-            }
-
-            return apiManager.handleRequest(httpServerRequest);
-        });
     }
 
     private void writeResponse(ChannelHandlerContext ctx, HttpServerResponse res) {
