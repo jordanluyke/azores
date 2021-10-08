@@ -25,7 +25,7 @@ public class Config {
     private static final Logger logger = LogManager.getLogger(Config.class);
 
     private SslContext sslCtx;
-    private int port = 8080;
+    private int port = 8443;
     private Injector injector;
 
     public Config() {
