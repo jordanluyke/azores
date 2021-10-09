@@ -39,16 +39,16 @@ public class AudioRoutes {
                 Optional<JsonNode> body = req.getBody();
                 if(body.isEmpty())
                     throw new WebException(HttpResponseStatus.BAD_REQUEST, "Body missing");
+                if(NodeUtil.get("frequencies", body.get()).isEmpty())
+                    throw new FieldRequiredException("frequencies");
                 FrequenciesRequest frequenciesRequest;
                 try {
                     frequenciesRequest = NodeUtil.parseNodeInto(FrequenciesRequest.class, body.get());
-                } catch(FieldRequiredException | JsonProcessingException | RuntimeException e) {
-                    if(e.getCause() != null)
-                        throw new WebException(HttpResponseStatus.BAD_REQUEST, "Error: " + e.getCause().getClass().getSimpleName());
-                    throw e;
+                } catch(FieldRequiredException | JsonProcessingException e) {
+                    throw new WebException(HttpResponseStatus.BAD_REQUEST, "Error: could not parse request");
                 }
                 if(frequenciesRequest.getFrequencies().isEmpty())
-                    throw new FieldRequiredException("frequencies");
+                    throw new WebException(HttpResponseStatus.BAD_REQUEST, "frequencies list empty");
                 return audioManager.setFrequencies(frequenciesRequest)
                         .toList()
                         .map(audioContexts -> new FrequenciesResponse(audioContexts, audioManager.isEnabled()));
